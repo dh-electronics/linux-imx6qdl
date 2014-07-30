@@ -385,6 +385,12 @@ static struct i2c_device_id rv3029c2_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, rv3029c2_id);
 
+
+static struct of_device_id rtc_rv3029c2_dt_ids[] = {
+	{ .compatible = "microc,rtc-rv3029c2" },
+	{ /* sentinel */ }
+};
+
 static int rv3029c2_probe(struct i2c_client *client,
 			  const struct i2c_device_id *id)
 {
@@ -415,6 +421,7 @@ static int rv3029c2_probe(struct i2c_client *client,
 static struct i2c_driver rv3029c2_driver = {
 	.driver = {
 		.name = "rtc-rv3029c2",
+		.of_match_table = of_match_ptr(rtc_rv3029c2_dt_ids),
 	},
 	.probe = rv3029c2_probe,
 	.id_table = rv3029c2_id,
