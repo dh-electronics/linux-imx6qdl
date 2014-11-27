@@ -370,6 +370,38 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	 */
 	card->ext_csd.rev = ext_csd[EXT_CSD_REV];
 
+	printk("%s: MMC version ", mmc_hostname(card->host) );
+	switch( card->ext_csd.rev ) {
+		case 0:
+			printk("4.0");
+			break;
+		case 1:
+			printk("4.1");
+			break;
+		case 2:
+			printk("4.2");
+			break;
+		case 3:
+			printk("4.3");
+			break;
+		case 4:
+			printk("4.4 (obsolete)");
+			break;
+		case 5:
+			printk("4.41");
+			break;
+		case 6:
+			printk("4.5");
+			break;
+		case 7:
+			printk("5.0");
+			break;
+		default:
+			printk("Unknown (EXT_CSD_REV=%d)", card->ext_csd.rev );
+			break;
+	}
+	printk(" (ManuID 0x%X, OEM 0x%X)\n", card->cid.manfid, card->cid.oemid );
+
 	card->ext_csd.raw_sectors[0] = ext_csd[EXT_CSD_SEC_CNT + 0];
 	card->ext_csd.raw_sectors[1] = ext_csd[EXT_CSD_SEC_CNT + 1];
 	card->ext_csd.raw_sectors[2] = ext_csd[EXT_CSD_SEC_CNT + 2];
