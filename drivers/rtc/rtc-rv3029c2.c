@@ -413,6 +413,12 @@ static int rv3029c2_probe(struct i2c_client *client,
 	if (IS_ERR(rtc))
 		return PTR_ERR(rtc);
 
+	/* 
+	 * Update interrupt (once per second) is not used by this driver.
+	 * Set the flag uie_unsupported to avoid problems with hwclock
+	*/
+	rtc->uie_unsupported = 1;
+
 	i2c_set_clientdata(client, rtc);
 
 	return 0;
