@@ -85,6 +85,9 @@
 #define RV3029C2_USR2_SECTION_LEN	0x04
 
 static int
+rv3029c2_i2c_set_time(struct i2c_client *client, struct rtc_time const *tm);
+
+static int
 rv3029c2_i2c_read_regs(struct i2c_client *client, u8 reg, u8 *buf,
 	unsigned len)
 {
@@ -144,6 +147,7 @@ rv3029c2_i2c_read_time(struct i2c_client *client, struct rtc_time *tm)
 	u8 buf[1];
 	int ret;
 	u8 regs[RV3029C2_WATCH_SECTION_LEN] = { 0, };
+	bool invalid = false;
 
 	ret = rv3029c2_i2c_get_sr(client, buf);
 	if (ret < 0) {
@@ -178,6 +182,36 @@ rv3029c2_i2c_read_time(struct i2c_client *client, struct rtc_time *tm)
 	tm->tm_mon = bcd2bin(regs[RV3029C2_W_MONTHS-RV3029C2_W_SEC]) - 1;
 	tm->tm_year = bcd2bin(regs[RV3029C2_W_YEARS-RV3029C2_W_SEC]) + 100;
 	tm->tm_wday = bcd2bin(regs[RV3029C2_W_DAYS-RV3029C2_W_SEC]) - 1;
+	
+	/* validate date information */
+	if (tm->tm_sec < 0 || tm->tm_sec > 60)
+	        invalid = true;
+	if (tm->tm_min < 0 || tm->tm_sec > 59)
+	        invalid = true;
+	if (tm->tm_hour < 0 || tm->tm_hour > 23)
+	        invalid = true;
+	if (tm->tm_mday < 1 || tm->tm_mday > 31)
+	        invalid = true;
+	if (tm->tm_mon < 0 || tm->tm_mon > 11)
+	        invalid = true;
+	if (tm->tm_year < 100 || tm->tm_year > 199)
+	        invalid = true;
+	if (tm->tm_wday < 0 || tm->tm_wday > 6)
+	        invalid = true;
+	
+	if (invalid) { 
+	        printk("rtc-rv3029v2: set default date 2000-01-01 00:00:00");
+	
+	        tm->tm_sec = 0;
+	        tm->tm_min = 0;
+	        tm->tm_hour = 0;
+	        tm->tm_mday = 1;
+	        tm->tm_mon = 0;
+	        tm->tm_year = 100;
+	        tm->tm_wday = 6;
+	        
+	        return rv3029c2_i2c_set_time(client, tm);
+	}
 
 	return 0;
 }
