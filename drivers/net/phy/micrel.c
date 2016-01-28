@@ -332,6 +332,8 @@ static int ksz9021_load_values_from_of(struct phy_device *phydev,
 	if (val4 != -4)
 		newval = ((newval & 0x0fff) | ((val4 / PS_TO_REG) & 0xf) << 12);
 
+	printk("Micrel KSZ9021 Gigabit PHY register #%d = 0x%04X\n", reg, newval);
+
 	return kszphy_extended_write(phydev, reg, newval);
 }
 
@@ -436,6 +438,8 @@ static int ksz9031_of_load_skew_values(struct phy_device *phydev,
 				(((val[i] / KSZ9031_PS_TO_REG) & maxval)
 					<< (field_sz * i));
 		}
+
+	printk("Micrel KSZ9031 Gigabit PHY register #%d = 0x%04X\n", reg, newval);
 
 	return ksz9031_extended_write(phydev, OP_DATA, 2, reg, newval);
 }
