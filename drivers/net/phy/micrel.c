@@ -299,6 +299,12 @@ static int ksz9021_load_values_from_of(struct phy_device *phydev,
 	int val4 = -4;
 	int newval;
 	int matches = 0;
+	int ps2reg = PS_TO_REG;
+
+	of_property_read_u32(of_node, "ksz9021-skew-step-ps", &ps2reg);
+	/* Avoid devision by zero */
+	if ( ps2reg == 0 )
+		ps2reg = PS_TO_REG;
 
 	if (!of_property_read_u32(of_node, field1, &val1))
 		matches++;
@@ -321,16 +327,16 @@ static int ksz9021_load_values_from_of(struct phy_device *phydev,
 		newval = 0;
 
 	if (val1 != -1)
-		newval = ((newval & 0xfff0) | ((val1 / PS_TO_REG) & 0xf) << 0);
+		newval = ((newval & 0xfff0) | ((val1 / ps2reg) & 0xf) << 0);
 
 	if (val2 != -2)
-		newval = ((newval & 0xff0f) | ((val2 / PS_TO_REG) & 0xf) << 4);
+		newval = ((newval & 0xff0f) | ((val2 / ps2reg) & 0xf) << 4);
 
 	if (val3 != -3)
-		newval = ((newval & 0xf0ff) | ((val3 / PS_TO_REG) & 0xf) << 8);
+		newval = ((newval & 0xf0ff) | ((val3 / ps2reg) & 0xf) << 8);
 
 	if (val4 != -4)
-		newval = ((newval & 0x0fff) | ((val4 / PS_TO_REG) & 0xf) << 12);
+		newval = ((newval & 0x0fff) | ((val4 / ps2reg) & 0xf) << 12);
 
 	printk("Micrel KSZ9021 Gigabit PHY register #%d = 0x%04X\n", reg, newval);
 
