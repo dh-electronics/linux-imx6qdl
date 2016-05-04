@@ -9,6 +9,7 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/clock/imx6qdl-clock.h>
 #define DHCOM_HW200								// Use it in other device tree files, e.g. imx6qdl-dhcom_cfg-xxxx.dtsi
 
 / {
@@ -139,7 +140,7 @@
 	codec: sgtl5000@0a {							// Audio codec SGTL5000XNAA3/R2
 		compatible = "fsl,sgtl5000";
 		reg = <0x0a>;
-		clocks = <&clks 201>;
+		clocks = <&clks IMX6QDL_CLK_CKO>;
 		VDDA-supply = <&reg_3p3v>;
 		VDDIO-supply = <&reg_3p3v>;
 	};

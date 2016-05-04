@@ -10,6 +10,7 @@
  */
 
 #include <dt-bindings/pwm/pwm.h>
+#include <dt-bindings/clock/imx6qdl-clock.h>
 
 / {
 	backlight {
@@ -176,7 +177,7 @@
 	codec: sgtl5000@0a {							// Audio codec SGTL5000XNAA3/R2
 		compatible = "fsl,sgtl5000";
 		reg = <0x0a>;
-		clocks = <&clks 0>;						// DUMMY because we use external clock
+		clocks = <&clks IMX6QDL_CLK_DUMMY>;				// DUMMY because we use external clock
 		clock-frequency = <24000000>;					// Set fixed clock frequency
 		VDDA-supply = <&reg_3p3v>;
 		VDDIO-supply = <&reg_3p3v>;
