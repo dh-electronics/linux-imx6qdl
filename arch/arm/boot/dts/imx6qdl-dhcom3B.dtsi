@@ -46,11 +46,6 @@
 	status = "okay";
 };
 
-// TODO: Remove this in Kernel 4.x.x
-&can2 {
-	status = "disabled";
-};
-
 &ecspi1 {									// ********** SPI 1 **********
 	fsl,spi-num-chipselects = <4>;
 	cs-gpios = <&gpio2 30 1>, <0>, <&gpio4 11 1>, <0>;			// SS0, (SS1), SS2, (SS3)
@@ -229,16 +224,6 @@
 	pinctrl-0 = <&pinctrl_dhcom_uart5>;
 	fsl,uart-has-rtscts;
 	status = "okay";
-};
-
-// TODO: Remove this in Kernel 4.x.x
-&usbphy1 {
-	fsl,anatop = <&anatop>;
-};
-
-// TODO: Remove this in Kernel 4.x.x
-&usbphy2 {
-	fsl,anatop = <&anatop>;
 };
 
 &usbh1 {									// USB Host 1
