@@ -246,8 +246,7 @@
 &usdhc2 {									// SD card (external via DHCOM)
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_usdhc2>;
-	cd-gpios = <&gpio6 16 0>;
-	cd-inverted;								// Card detect is inverted (active HIGH)
+	cd-gpios = <&gpio6 16 GPIO_ACTIVE_HIGH>;
 	keep-power-in-suspend;
 	status = "okay";
 };
@@ -255,7 +254,7 @@
 &usdhc3 {									// Mirco SD card (onModule)
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_usdhc3>;
-	cd-gpios = <&gpio7 8 0>;
+	cd-gpios = <&gpio7 8 GPIO_ACTIVE_LOW>;
 	fsl,wp-controller;
 	keep-power-in-suspend;
 	status = "okay";
