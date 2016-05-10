@@ -964,6 +964,16 @@ sdhci_esdhc_imx_probe_dt(struct platform_device *pdev,
 	struct esdhc_platform_data *boarddata = &imx_data->boarddata;
 	int ret;
 
+	ret = of_alias_get_id(np, "mmcblk");
+	if (ret < 0) {
+		host->mmc->devidx = (-1);
+		dev_info(&pdev->dev, "Didn't find mmcblkX aliases in device tree!");
+	}
+	else {
+		host->mmc->devidx = ret;
+		dev_info(&pdev->dev, "DT aliases ==> mmcblk%d", host->mmc->devidx );
+	}
+
 	if (of_get_property(np, "fsl,wp-controller", NULL))
 		boarddata->wp_type = ESDHC_WP_CONTROLLER;
 
