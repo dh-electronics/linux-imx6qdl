@@ -28,9 +28,9 @@
 
 &ecspi1 {									// ********** SPI 1 **********
 	spidev@2 {								// ==> /dev/spidev0.2
-		compatible = "spidev";
+		compatible =  "spidev", "fsl,ecspi";
 		reg = <2>;							// SS2
-		spi-max-frequency = <50000000>;
+		spi-max-frequency = <54000000>;
 		spi-cpha;							// Shifted clock phase (CPHA) mode
 		spi-cpol;							// Inverse clock polarity (CPOL) mode
 	};
