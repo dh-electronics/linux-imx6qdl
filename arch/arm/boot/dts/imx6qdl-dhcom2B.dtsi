@@ -392,8 +392,8 @@
 
 		pinctrl_dhcom_flexcan1: flexcan1_grp {
 			fsl,pins = <
-				MX6QDL_PAD_KEY_COL2__FLEXCAN1_TX    0x80000000
-				MX6QDL_PAD_GPIO_8__FLEXCAN1_RX      0x80000000
+				MX6QDL_PAD_KEY_COL2__FLEXCAN1_TX    0x1b0b0
+				MX6QDL_PAD_GPIO_8__FLEXCAN1_RX      0x1b0b0
 			>;
 		};
 
