@@ -702,6 +702,8 @@ static int ci_get_platdata(struct device *dev,
 			return ret;
 		}
 	}
+	if( platdata->itc_setting == 0 )
+		dev_info(dev, "ITC: Trigger USB interrupt immediately");
 
 	if (of_find_property(dev->of_node, "ahb-burst-config", NULL)) {
 		ret = of_property_read_u32(dev->of_node, "ahb-burst-config",
