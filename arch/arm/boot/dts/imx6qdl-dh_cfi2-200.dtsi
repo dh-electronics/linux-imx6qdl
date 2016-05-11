@@ -57,6 +57,10 @@
 &DHCOM_I2C2 {									// ********** I2C 2 **********
 };
 
+&usbotg {									// USB OTG
+	itc-setting = <0x0>;							// 0 micro-frames for best response of ethernet gadget
+};
+
 &weim {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_weim &pinctrl_dhcom_weim_cs0>;
