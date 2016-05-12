@@ -37,6 +37,14 @@
 			gpio = <&gpio3 31 0>;					// GPIO: USB Host 1 Power
 			enable-active-high;
 		};
+
+		reg_3p3v: 3P3V {
+			compatible = "regulator-fixed";
+			regulator-name = "3P3V";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;
+		};
 	};
 };
 
@@ -171,14 +179,12 @@
 	};*/
 
 	tsc2004@49 {								// Touch controller TI TSC2014 (onModule)
-		compatible = "ti,tsc2004";
+		compatible = "ti,tsc2014", "ti,tsc2004";
+		reg = <0x49>;
+		vio-supply = <&reg_3p3v>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_dhcom_tsc2004_hw300>;
-		reg = <0x49>;
-		tsc_model =  <2004>;
-		interrupt-parent = <&gpio4>;
-		interrupts = <14 2>;
-		irq-gpios = <&gpio4 14 0>;
+		interrupts-extended = <&gpio4 14 IRQ_TYPE_EDGE_FALLING>;
 		status = "disabled";						// It isn't actived by default (if needed it should be actived in dts layers above)
 	};
 

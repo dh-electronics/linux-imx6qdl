@@ -208,14 +208,12 @@
 	};*/
 
 	tsc2004@49 {								// Touch controller TI TSC2014 (onModule)
-		compatible = "ti,tsc2004";
+		compatible = "ti,tsc2014", "ti,tsc2004";
+		reg = <0x49>;
+		vio-supply = <&reg_3p3v>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_dhcom_tsc2004_hw200>;
-		reg = <0x49>;
-		tsc_model =  <2004>;
-		interrupt-parent = <&gpio6>;
-		interrupts = <28 2>;
-		irq-gpios = <&gpio6 28 0>;
+		interrupts-extended = <&gpio6 28 IRQ_TYPE_EDGE_FALLING>;
 		status = "disabled";						// It isn't actived by default (if needed it should be actived in dts layers above)
 	};
 
