@@ -979,6 +979,17 @@ config TOUCHSCREEN_TSC2007
 	  To compile this driver as a module, choose M here: the
 	  module will be called tsc2007.
 
+config TOUCHSCREEN_TMG120_TS
+	tristate "DH electronics tmg120 touch controller"
+	depends on I2C
+	help
+	  Say Y here to enable DH electronics tmg120 touchscreen support.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tmg120_ts.
+
 config TOUCHSCREEN_W90X900
 	tristate "W90P910 touchscreen driver"
 	depends on ARCH_W90X900
