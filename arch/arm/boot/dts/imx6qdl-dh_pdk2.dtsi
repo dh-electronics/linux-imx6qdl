@@ -82,6 +82,17 @@
 		};
 	};*/
 
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clk_ext_audio_codec: clock@0 {
+			compatible = "fixed-clock";
+			reg = <0>;
+			#clock-cells = <0>;
+			clock-frequency = <24000000>;
+		};
+	};
+
 	sound {
 		compatible = "fsl,imx-audio-sgtl5000";
 		model = "imx-sgtl5000";
@@ -177,8 +188,7 @@
 	codec: sgtl5000@0a {							// Audio codec SGTL5000XNAA3/R2
 		compatible = "fsl,sgtl5000";
 		reg = <0x0a>;
-		clocks = <&clks IMX6QDL_CLK_DUMMY>;				// DUMMY because we use external clock
-		clock-frequency = <24000000>;					// Set fixed clock frequency
+		clocks = <&clk_ext_audio_codec>;				// External clock
 		VDDA-supply = <&reg_3p3v>;
 		VDDIO-supply = <&reg_3p3v>;
 	};
