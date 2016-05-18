@@ -97,6 +97,7 @@ static int __init imx_weim_gpr_setup(struct platform_device *pdev)
 
 	for (i = 0; i < ARRAY_SIZE(gprvals); i++) {
 		if (gprval == gprvals[i]) {
+			dev_info(&pdev->dev, "GPR setup: 0x%X\n", gprval);
 			/* Found it. Set up IOMUXC_GPR1[11:0] with it. */
 			regmap_update_bits(gpr, IOMUXC_GPR1, 0xfff, gprval);
 			return 0;
@@ -109,7 +110,8 @@ err:
 }
 
 /* Parse and set the timing for this device. */
-static int __init weim_timing_setup(struct device_node *np, void __iomem *base,
+static int __init weim_timing_setup(struct platform_device *pdev,
+				    struct device_node *np, void __iomem *base,
 				    const struct imx_weim_devtype *devtype)
 {
 	u32 cs_idx, value[devtype->cs_regs_count];
@@ -120,6 +122,9 @@ static int __init weim_timing_setup(struct device_node *np, void __iomem *base,
 	if (ret)
 		return ret;
 
+	dev_info(&pdev->dev, "*** %s ***\n", np->name);
+	dev_info(&pdev->dev, "CS: %d\n", cs_idx);
+
 	if (cs_idx >= devtype->cs_count)
 		return -EINVAL;
 
@@ -127,6 +132,9 @@ static int __init weim_timing_setup(struct device_node *np, void __iomem *base,
 					 value, devtype->cs_regs_count);
 	if (ret)
 		return ret;
+
+	for (i = 0; i < devtype->cs_regs_count; i++)
+		dev_info(&pdev->dev, "Timings: 0x%08X\n", value[i]);
 
 	/* set the timing for WEIM */
 	for (i = 0; i < devtype->cs_regs_count; i++)
@@ -154,7 +162,7 @@ static int __init weim_parse_dt(struct platform_device *pdev,
 		if (!child->name)
 			continue;
 
-		ret = weim_timing_setup(child, base, devtype);
+		ret = weim_timing_setup(pdev, child, base, devtype);
 		if (ret)
 			dev_warn(&pdev->dev, "%s set timing failed.\n",
 				child->full_name);
@@ -179,6 +187,8 @@ static int __init weim_probe(struct platform_device *pdev)
 	void __iomem *base;
 	int ret;
 
+	dev_info(&pdev->dev, ">>>>>>>> ENTER >>>>>>>>\n");
+
 	/* get the resource */
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
@@ -196,10 +206,13 @@ static int __init weim_probe(struct platform_device *pdev)
 
 	/* parse the device node */
 	ret = weim_parse_dt(pdev, base);
+	dev_info(&pdev->dev, "***\n");
 	if (ret)
 		clk_disable_unprepare(clk);
 	else
 		dev_info(&pdev->dev, "Driver registered.\n");
+
+	dev_info(&pdev->dev, "<<<<<<<<  EXIT <<<<<<<<\n");
 
 	return ret;
 }
