@@ -1,4 +1,8 @@
 obj-$(CONFIG_UIO)	+= uio.o
+obj-$(CONFIG_UIO_CFI2)	+= uio_cfi2_main.o
+obj-$(CONFIG_UIO_CFI2_UART0)	+= uio_cfi2_uart0.o
+obj-$(CONFIG_UIO_CFI2_UART1)	+= uio_cfi2_uart1.o
+obj-$(CONFIG_UIO_CFI2_UART2)	+= uio_cfi2_uart2.o
 obj-$(CONFIG_UIO_CIF)	+= uio_cif.o
 obj-$(CONFIG_UIO_PDRV_GENIRQ)	+= uio_pdrv_genirq.o
 obj-$(CONFIG_UIO_DMEM_GENIRQ)	+= uio_dmem_genirq.o
