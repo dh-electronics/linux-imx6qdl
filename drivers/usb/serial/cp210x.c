@@ -307,6 +307,11 @@ static struct usb_serial_driver cp210x_device = {
 #define IOCTL_GPIOGET		0x8000
 #define IOCTL_GPIOSET		0x8001
 #define IOCTL_AUTO_GPIO_CTL	0x8002
+#define IOCTL_EVENTMASKGET	0x8003
+#define IOCTL_EVENTMASKSET	0x8004
+#define IOCTL_EVENTSTATEGET	0x8005
+#define IOCTL_COMMSTATUSGET	0x8006
+#define IOCTL_PURGE		0x8007
 
 static struct usb_serial_driver * const serial_drivers[] = {
 	&cp210x_device, NULL
@@ -831,11 +836,37 @@ static int cp210x_ioctl(struct tty_struct *tty,
 			return -ENOTSUPP;
 		}
 		break;
+
+	case IOCTL_EVENTMASKGET:
+		result = cp210x_get_config(port, CP210X_GET_EVENTMASK, (unsigned int*)arg, 2);
+		dev_dbg(dev, "%s (CP210X_GET_EVENTMASK) - get_wait_mask = %04X"
+			, __func__, *(unsigned int*)arg);
+		break;
+	case IOCTL_EVENTMASKSET:	
+		result = cp210x_set_config(port, CP210X_SET_EVENTMASK, (unsigned int*)arg, 2);
+		dev_dbg(dev, "%s (CP210X_SET_EVENTMASK) - set_wait_mask = %04X"
+			, __func__, *(unsigned int*)arg);
+		break;
+	case IOCTL_EVENTSTATEGET:
+		result = cp210x_get_config(port, CP210X_GET_EVENTSTATE,	(unsigned int*)arg, 2);
+		dev_dbg(dev, "%s (CP210X_GET_EVENTSTATE) - event_state_get = %04X"
+			, __func__, *(unsigned int*)arg);
+		break;
+	case IOCTL_COMMSTATUSGET:
+		result = cp210x_get_config(port, CP210X_GET_COMM_STATUS, (unsigned int*)arg, 0x13);
+		dev_dbg(dev, "%s (P210X_GET_COMM_STATUS)", __func__);
+		break;
+	case IOCTL_PURGE:
+		result = cp210x_set_config(port, CP210X_PURGE, (unsigned int*)arg, 2);
+		dev_dbg(dev, "%s (CP210X_PURGE) - purge_mask = %01X"
+			, __func__, *(unsigned int*)arg);
+		break;
 	default:
+		return -ENOIOCTLCMD;
 		break;
 	}
 
-	return -ENOIOCTLCMD;
+	return result;
 }
 
 /*
