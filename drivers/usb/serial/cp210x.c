@@ -24,6 +24,60 @@
 #include <linux/uaccess.h>
 #include <linux/usb/serial.h>
 
+/*
+ * CP2108 Define bit locations for EnhancedFxn_IFCx
+ */
+#define EF_IFC_GPIO_TXLED   0x01
+#define EF_IFC_GPIO_RXLED   0x02
+#define EF_IFC_GPIO_RS485   0x04
+#define EF_RS485_INVERT	    0x08
+// If the next bit is clear, GPIO1 is low while sending UART data.
+// If it is set, GPIO1 is high while sending UART data, and low otherwise
+#define EF_IFC_GPIO_RS485_LOGIC 0x08
+#define EF_IFC_GPIO_CLOCK       0x10
+#define EF_IFC_DYNAMIC_SUSPEND  0x40
+
+/*
+ * CP2108 Quad Port Config Structure
+ */
+typedef struct {
+	uint16_t Mode_PB0;
+	uint16_t Mode_PB1;
+	uint16_t Mode_PB2;
+	uint16_t Mode_PB3;
+	uint16_t Mode_PB4;
+
+	uint16_t LowPower_PB0;
+	uint16_t LowPower_PB1;
+	uint16_t LowPower_PB2;
+	uint16_t LowPower_PB3;
+	uint16_t LowPower_PB4;
+
+	uint16_t Latch_PB0;
+	uint16_t Latch_PB1;
+	uint16_t Latch_PB2;
+	uint16_t Latch_PB3;
+	uint16_t Latch_PB4;
+} quad_port_state;
+
+struct quad_port_config {
+	quad_port_state Reset_Latch;
+	quad_port_state Suspend_Latch;
+	uint8_t IPDelay_IFC0;
+	uint8_t IPDelay_IFC1;
+	uint8_t IPDelay_IFC2;
+	uint8_t IPDelay_IFC3;
+	uint8_t EnhFxn_IFC0; /* contains GPIO alt function bits */
+	uint8_t EnhFxn_IFC1; /* contains GPIO alt function bits */
+	uint8_t EnhFxn_IFC2; /* contains GPIO alt function bits */
+	uint8_t EnhFxn_IFC3; /* contains GPIO alt function bits */
+	uint8_t EnhancedFxn_Device;
+	uint8_t ExtClk0Freq;
+	uint8_t ExtClk1Freq;
+	uint8_t ExtClk2Freq;
+	uint8_t ExtClk3Freq;
+};
+
 #define DRIVER_DESC "Silicon Labs CP210x RS232 serial adaptor driver (with GPIO support)"
 
 /*
@@ -252,6 +306,7 @@ static struct usb_serial_driver cp210x_device = {
 /* IOCTLs */
 #define IOCTL_GPIOGET		0x8000
 #define IOCTL_GPIOSET		0x8001
+#define IOCTL_AUTO_GPIO_CTL	0x8002
 
 static struct usb_serial_driver * const serial_drivers[] = {
 	&cp210x_device, NULL
@@ -300,6 +355,7 @@ static struct usb_serial_driver * const serial_drivers[] = {
 #define CP210X_WRITE_LATCH	0x37E1
 #define CP210X_READ_LATCH	0x00C2
 #define CP210X_GET_PARTNUM	0x370B
+#define CP210X_DO_QUADPORT	0x370C
 
 /* CP210X_(SET|GET)_BAUDDIV */
 #define BAUD_RATE_GEN_FREQ	0x384000
@@ -600,7 +656,9 @@ static void cp210x_close(struct usb_serial_port *port)
 static int cp210x_ioctl(struct tty_struct *tty,
 	unsigned int cmd, unsigned long arg)
 {
+	struct quad_port_config temp_cp2108_cfg;
 	struct usb_serial_port *port = tty->driver_data;
+	struct device *dev = &port->dev;
 	struct cp210x_port_private *port_priv = usb_get_serial_port_data(port);
 	int result = 0;
 	unsigned long latch_buf = 0;
@@ -699,6 +757,80 @@ static int cp210x_ioctl(struct tty_struct *tty,
 		}
 		break;
 
+	case IOCTL_AUTO_GPIO_CTL:
+		if ((port_priv->bPartNumber == CP2108_PARTNUM)) {
+
+			/* get */
+			result = usb_control_msg(port->serial->dev,
+					usb_rcvctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_DEVICE_TO_HOST,
+					CP210X_DO_QUADPORT,
+					0,
+					&temp_cp2108_cfg, sizeof(struct quad_port_config), USB_CTRL_GET_TIMEOUT);
+
+			if (result != sizeof(struct quad_port_config)) {
+				dev_err(dev, "ERROR get cp2108_cfg!\n");
+				return -EIO;
+			}
+
+			dev_dbg(dev, "%s - EnhFxn_IFC0 = 0x%.2x\n", __func__, temp_cp2108_cfg.EnhFxn_IFC0);
+			dev_dbg(dev, "%s - EnhFxn_IFC1 = 0x%.2x\n", __func__, temp_cp2108_cfg.EnhFxn_IFC1);
+			dev_dbg(dev, "%s - EnhFxn_IFC2 = 0x%.2x\n", __func__, temp_cp2108_cfg.EnhFxn_IFC2);
+			dev_dbg(dev, "%s - EnhFxn_IFC3 = 0x%.2x\n", __func__, temp_cp2108_cfg.EnhFxn_IFC3);
+
+			if (arg) {
+				temp_cp2108_cfg.EnhFxn_IFC0 |= ( EF_IFC_GPIO_TXLED |
+								 EF_IFC_GPIO_RXLED |
+								 EF_IFC_GPIO_RS485 |
+								 EF_RS485_INVERT );
+
+				temp_cp2108_cfg.EnhFxn_IFC1 |= ( EF_IFC_GPIO_TXLED |
+								 EF_IFC_GPIO_RXLED |
+								 EF_IFC_GPIO_RS485 |
+								 EF_RS485_INVERT );
+
+				temp_cp2108_cfg.EnhFxn_IFC2 |= ( EF_IFC_GPIO_TXLED |
+								 EF_IFC_GPIO_RXLED |
+								 EF_IFC_GPIO_RS485 |
+								 EF_RS485_INVERT );
+			} else {
+				temp_cp2108_cfg.EnhFxn_IFC0 &= ~(EF_IFC_GPIO_TXLED |
+								 EF_IFC_GPIO_RXLED |
+								 EF_IFC_GPIO_RS485 |
+								 EF_RS485_INVERT );
+
+				temp_cp2108_cfg.EnhFxn_IFC1 &= ~(EF_IFC_GPIO_TXLED |
+								 EF_IFC_GPIO_RXLED |
+								 EF_IFC_GPIO_RS485 |
+								 EF_RS485_INVERT );
+
+				temp_cp2108_cfg.EnhFxn_IFC2 &= ~(EF_IFC_GPIO_TXLED |
+								 EF_IFC_GPIO_RXLED |
+								 EF_IFC_GPIO_RS485 |
+								 EF_RS485_INVERT );
+			}
+
+			/* set */
+			result = usb_control_msg(port->serial->dev,
+					usb_sndctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_HOST_TO_DEVICE,
+					CP210X_DO_QUADPORT,
+					0,
+					&temp_cp2108_cfg, sizeof(struct quad_port_config), USB_CTRL_SET_TIMEOUT);
+
+			if (result != sizeof(struct quad_port_config)) {
+				dev_err(dev, "ERROR set cp2108_cfg!\n");
+				return -EIO;
+			} else {
+				dev_dbg(dev, "ONLY uarts 0,1 and 2 are set - uart 3 is left in old state!\n");
+				dev_dbg(dev, "Reconnect power-supply to activate new configuration!\n");
+			}
+		} else {
+			return -ENOTSUPP;
+		}
+		break;
 	default:
 		break;
 	}
