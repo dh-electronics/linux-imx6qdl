@@ -171,6 +171,9 @@ static int pwm_backlight_parse_dt(struct device *dev,
 			return ret;
 
 		data->dft_brightness = value;
+		dev_info(dev, "Set default brightness to %d/%d\n",
+			 data->dft_brightness,
+			 data->max_brightness - 1);
 		data->max_brightness--;
 	}
 
@@ -263,6 +266,13 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 
 		pb->enable_gpio = gpio_to_desc(data->enable_gpio);
 	}
+
+	if( pb->enable_gpio )
+		dev_info(&pdev->dev, "Using GPIO #%d (%d.%d) active %s for switching display on/off\n",
+		         desc_to_gpio( pb->enable_gpio ),
+		        (desc_to_gpio( pb->enable_gpio ) / 32) + 1,
+		         desc_to_gpio( pb->enable_gpio ) % 32,
+		         gpiod_is_active_low( pb->enable_gpio ) ? "LOW" : "HIGH");
 
 	pb->power_supply = devm_regulator_get(&pdev->dev, "power");
 	if (IS_ERR(pb->power_supply)) {
