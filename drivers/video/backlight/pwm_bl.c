@@ -153,6 +153,11 @@ static int pwm_backlight_parse_dt(struct device *dev,
 
 	memset(data, 0, sizeof(*data));
 
+	ret = of_property_read_string(node, "backlight-sysfs-name",
+	                              &data->sysfs_name);
+	if( ret < 0 )
+		data->sysfs_name = NULL;
+
 	/* determine the number of brightness levels */
 	prop = of_find_property(node, "brightness-levels", &length);
 	if (!prop)
@@ -393,7 +398,9 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = data->max_brightness;
-	bl = backlight_device_register(dev_name(&pdev->dev), &pdev->dev, pb,
+	if(data->sysfs_name == NULL )
+		data->sysfs_name = dev_name(&pdev->dev);
+	bl = backlight_device_register(data->sysfs_name, &pdev->dev, pb,
 				       &pwm_backlight_ops, &props);
 	if (IS_ERR(bl)) {
 		dev_err(&pdev->dev, "failed to register backlight\n");
