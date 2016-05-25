@@ -122,6 +122,8 @@ void gpiod_set_raw_array_value_cansleep(unsigned int array_size,
 
 int gpiod_set_debounce(struct gpio_desc *desc, unsigned debounce);
 
+void gpiod_set_active_low(struct gpio_desc *desc);
+void gpiod_set_active_high(struct gpio_desc *desc);
 int gpiod_is_active_low(const struct gpio_desc *desc);
 int gpiod_cansleep(const struct gpio_desc *desc);
 

@@ -1229,6 +1229,26 @@ int gpiod_set_debounce(struct gpio_desc *desc, unsigned debounce)
 EXPORT_SYMBOL_GPL(gpiod_set_debounce);
 
 /**
+ * gpiod_set_active_low - Set a GPIO to active-low
+ * @desc: the gpio descriptor to test
+ */
+void gpiod_set_active_low(struct gpio_desc *desc)
+{
+	set_bit(FLAG_ACTIVE_LOW, &desc->flags);
+}
+EXPORT_SYMBOL_GPL(gpiod_set_active_low);
+
+/**
+ * gpiod_set_active_high - Set a GPIO to active-high
+ * @desc: the gpio descriptor to test
+ */
+void gpiod_set_active_high(struct gpio_desc *desc)
+{
+	clear_bit(FLAG_ACTIVE_LOW, &desc->flags);
+}
+EXPORT_SYMBOL_GPL(gpiod_set_active_high);
+
+/**
  * gpiod_is_active_low - test whether a GPIO is active-low or not
  * @desc: the gpio descriptor to test
  *
