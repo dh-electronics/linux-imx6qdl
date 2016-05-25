@@ -21,7 +21,18 @@
 		brightness-levels = <0 16 23 32 45 64 91 128 181 256>;
 		default-brightness-level = <7>;					// Default level can be set to 0 by bootargs
 		enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>;			// GPIO number and its polarity can be overwritten by bootargs
+		power-supply = <&reg_24v_ext>;
 		status = "okay";
+	};
+
+	regulators {
+		reg_24v_ext: 24V_EXT {
+			compatible = "regulator-fixed";
+			regulator-name = "24V_EXT";
+			regulator-min-microvolt = <24000000>;
+			regulator-max-microvolt = <24000000>;
+			regulator-always-on;
+		};
 	};
 
 	display@di0 {								// Parallel display interface
