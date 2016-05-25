@@ -13,6 +13,7 @@
 #include <linux/gpio/consumer.h>
 #include <linux/gpio.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
@@ -23,6 +24,14 @@
 #include <linux/pwm_backlight.h>
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
+
+#define SET_MAX_SIZE 7
+static char *set[SET_MAX_SIZE] = { [0 ... (SET_MAX_SIZE-1)] = NULL };
+static int size_bootarg_set = 0;
+module_param_array(set, charp, &size_bootarg_set, S_IRUGO);
+
+static bool disable = 0;
+module_param(disable, bool, S_IRUGO);
 
 struct pwm_bl_data {
 	struct pwm_device	*pwm;
@@ -171,6 +180,20 @@ static int pwm_backlight_parse_dt(struct device *dev,
 			return ret;
 
 		data->dft_brightness = value;
+		/* Set default brightness to 0 if bootarg BLON = 0
+		   If you want to set the default brightness: BLON = 1000 + brightness */
+		if( size_bootarg_set != 0 ) {
+			int property_value = (int)bootargs_get_property_value( set, size_bootarg_set, "BLON", (-1) );
+			if( property_value == 0 )
+				data->dft_brightness = 0;
+			if( property_value >= 1000 ) {
+				property_value -= 1000;
+				if( property_value < data->max_brightness )
+					data->dft_brightness = property_value;
+				else
+					data->dft_brightness = data->max_brightness - 1;
+			}
+		}
 		dev_info(dev, "Set default brightness to %d/%d\n",
 			 data->dft_brightness,
 			 data->max_brightness - 1);
@@ -203,6 +226,22 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 	struct backlight_device *bl;
 	struct pwm_bl_data *pb;
 	int ret;
+
+	/* The "disable" variable come from bootargs */
+	if( disable ) {
+		dev_info(&pdev->dev, "Disabled by bootarg\n");
+		return -ENODEV;;
+	}
+
+	/* Output given bootargs */
+	if( size_bootarg_set != 0 ) {
+		int blgpio = (int)bootargs_get_property_value( set, size_bootarg_set, "BLGPIO", (-1) );
+		int blinv = (int)bootargs_get_property_value( set, size_bootarg_set, "BLINV", (-1) );
+		int blon = (int)bootargs_get_property_value( set, size_bootarg_set, "BLON", (-1) );
+		int pwminv = (int)bootargs_get_property_value( set, size_bootarg_set, "PWMINV", (-1) );
+		dev_info(&pdev->dev, "Bootargs: BLGPIO=%d BLINV=%d BLON=%d PWMINV=%d\n",
+		         blgpio, blinv, blon, pwminv );
+	}
 
 	if (!data) {
 		ret = pwm_backlight_parse_dt(&pdev->dev, &defdata);
@@ -244,11 +283,30 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 	pb->dev = &pdev->dev;
 	pb->enabled = false;
 
-	pb->enable_gpio = devm_gpiod_get_optional(&pdev->dev, "enable",
-						  GPIOD_OUT_HIGH);
-	if (IS_ERR(pb->enable_gpio)) {
-		ret = PTR_ERR(pb->enable_gpio);
-		goto err_alloc;
+	/* Use given GPIO if bootarg BLGPIO is available */
+	if( size_bootarg_set != 0 ) {
+		int property_value = (int)bootargs_get_property_value( set, size_bootarg_set, "BLGPIO", (-1) );
+		if( (property_value >= 0) && (gpio_is_valid(property_value)) ) {
+			data->enable_gpio = property_value;
+			ret = devm_gpio_request_one(&pdev->dev, data->enable_gpio,
+						    GPIOF_OUT_INIT_HIGH, "enable");
+			if (ret < 0) {
+				dev_err(&pdev->dev, "failed to request GPIO#%d: %d\n",
+					data->enable_gpio, ret);
+				goto err_alloc;
+			}
+
+			pb->enable_gpio = gpio_to_desc(data->enable_gpio);
+		}
+	}
+
+	if( !pb->enable_gpio ) {
+		pb->enable_gpio = devm_gpiod_get_optional(&pdev->dev, "enable",
+							  GPIOD_OUT_HIGH);
+		if (IS_ERR(pb->enable_gpio)) {
+			ret = PTR_ERR(pb->enable_gpio);
+			goto err_alloc;
+		}
 	}
 
 	/*
@@ -265,6 +323,15 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 		}
 
 		pb->enable_gpio = gpio_to_desc(data->enable_gpio);
+	}
+
+	/* Overwrite device tree value only if bootarg BLINV available */
+	if( size_bootarg_set != 0 ) {
+		int property_value = (int)bootargs_get_property_value( set, size_bootarg_set, "BLINV", (-1) );
+		if( property_value == 0 )
+			gpiod_set_active_high( pb->enable_gpio );
+		if( property_value == 1 )
+			gpiod_set_active_low( pb->enable_gpio );
 	}
 
 	if( pb->enable_gpio )
@@ -308,6 +375,18 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 		pb->period = data->pwm_period_ns;
 		pwm_set_period(pb->pwm, data->pwm_period_ns);
 	}
+
+	/* Overwrite device tree value only if bootarg PWMINV available */
+	if( size_bootarg_set != 0 ) {
+		int property_value = (int)bootargs_get_property_value( set, size_bootarg_set, "PWMINV", (-1) );
+		if( property_value == 0 )
+			pwm_set_polarity(pb->pwm, PWM_POLARITY_NORMAL);
+		if( property_value == 1 )
+			pwm_set_polarity(pb->pwm, PWM_POLARITY_INVERSED);
+	}
+
+	dev_info(&pdev->dev, "Operation mode: %s\n",
+	         (pwm_get_polarity( pb->pwm ) == PWM_POLARITY_NORMAL) ? "NORMAL" : "INVERSED" );
 
 	pb->lth_brightness = data->lth_brightness * (pb->period / pb->scale);
 
