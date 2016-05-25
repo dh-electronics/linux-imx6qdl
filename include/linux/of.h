@@ -1102,4 +1102,9 @@ static inline int of_overlay_destroy_all(void)
 
 #endif
 
+extern signed long bootargs_get_property_value( char **timings,
+						int size,
+						const char *property_name,
+						signed long default_value );
+
 #endif /* _LINUX_OF_H */

@@ -2310,3 +2310,56 @@ struct device_node *of_graph_get_remote_port(const struct device_node *node)
 	return of_get_next_parent(np);
 }
 EXPORT_SYMBOL(of_graph_get_remote_port);
+
+/**
+ * bootargs_get_property_value - parses a string out of all array elements and gives its value back
+ * @timings: array of strings, which each of them contain name and value combo e.g. CLK:100
+ * @size: number of array elements
+ * @property_name: string to parse
+ * @default_value: will be set in case of error (pos. and zero value will print a warning)
+ */
+signed long bootargs_get_property_value( char **timings, int size, const char *property_name,
+					 signed long default_value )
+{
+	signed long res = 0;
+	int index = 0;
+	char *separator_pos = NULL;
+	int name_len = 0;
+
+	/* Replace separator ',' with zero (termination) if it isn't done by the kernel */
+	for( index = 1; index < size; index++ ) {
+		if( *(timings[index] - 1) == ',' )
+			*(timings[index] - 1) = '\0';
+	}
+
+	for( index = 0; index < size; index++ ) {
+		separator_pos = strchr( timings[index], ':' );
+		if( separator_pos == NULL )
+			continue; /* Separator is missing */
+
+		name_len = separator_pos - timings[index];
+		if( strlen(property_name) != name_len )
+			continue; /* Length doesn't match */
+
+		if( strncmp( timings[index], property_name, name_len ) == 0 ) {
+			if( kstrtol( timings[index] + name_len + 1, 0, &res ) != 0 ) {
+				res = default_value;
+				if( default_value >= 0 )
+					printk("  Warning: Could not get value from \"%s\" => set default (%ld)\n",
+					       timings[index], default_value );
+			}
+			break; /* Stop looping, because string was found */
+		}
+	}
+
+	/* String was not found in the given array */
+	if( index == size ) {
+		res = default_value;
+		if( default_value >= 0 )
+			printk("  Warning: Missing \"%s\" display value => set default (%ld)\n",
+			       property_name, default_value );
+	}
+
+	return res;
+}
+EXPORT_SYMBOL_GPL(bootargs_get_property_value);
