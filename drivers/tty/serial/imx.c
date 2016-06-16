@@ -39,6 +39,9 @@
 #include <linux/of_device.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
+#include <linux/string.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
 #include <asm/irq.h>
 #include <linux/platform_data/serial-imx.h>
@@ -227,6 +230,10 @@ struct imx_port {
 	wait_queue_head_t	dma_wait;
 	unsigned int            saved_reg[10];
 	bool			context_saved;
+
+	/* rs485 gpio mode */
+        int                     rts_gpio;       /* mandatory for rs485 gpio mode */
+        int                     rxen_gpio;      /* optional  for rs485 gpio mode */
 };
 
 struct imx_port_ucrs {
@@ -316,6 +323,30 @@ static void imx_port_ucrs_restore(struct uart_port *port,
 }
 #endif
 
+static inline void imx_rs485_rts_gpio_on(struct imx_port *imx_uart_port)
+{
+        /* gpio == high -> tx == enabled */
+        gpio_set_value(imx_uart_port->rts_gpio, 1);
+}
+
+static inline void imx_rs485_rts_gpio_off(struct imx_port *imx_uart_port)
+{
+        /* gpio == low -> tx == disabled */
+        gpio_set_value(imx_uart_port->rts_gpio, 0);
+}
+
+static inline void imx_rs485_rxen_gpio_enable(struct imx_port *imx_uart_port)
+{
+        /* gpio == low -> rx == enabled */
+        gpio_set_value(imx_uart_port->rxen_gpio, 0);
+}
+
+static inline void imx_rs485_rxen_gpio_disable(struct imx_port *imx_uart_port)
+{
+        /* gpio == high -> rx == disabled */
+        gpio_set_value(imx_uart_port->rxen_gpio, 1);
+}
+
 static void imx_port_rts_active(struct imx_port *sport, unsigned long *ucr2)
 {
 	*ucr2 &= ~UCR2_CTSC;
@@ -357,13 +388,22 @@ static void imx_stop_tx(struct uart_port *port)
 	/* in rs485 mode disable transmitter if shifter is empty */
 	if (port->rs485.flags & SER_RS485_ENABLED &&
 	    readl(port->membase + USR2) & USR2_TXDC) {
-		temp = readl(port->membase + UCR2);
-		if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
-			imx_port_rts_inactive(sport, &temp);
-		else
-			imx_port_rts_active(sport, &temp);
-		temp |= UCR2_RXEN;
-		writel(temp, port->membase + UCR2);
+	        if ((-1)==sport->rts_gpio) { /* dedicated rts */
+	                temp = readl(port->membase + UCR2);
+		        if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
+			        imx_port_rts_inactive(sport, &temp);
+		        else
+			        imx_port_rts_active(sport, &temp);
+                        temp |= UCR2_RXEN;
+                        writel(temp, port->membase + UCR2);
+		} else { /* gpio rts */
+                        if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
+			        imx_rs485_rts_gpio_on(sport);
+		        else
+			        imx_rs485_rts_gpio_off(sport);
+
+                        imx_rs485_rxen_gpio_enable(sport);
+		}
 
 		temp = readl(port->membase + UCR4);
 		temp &= ~UCR4_TCEN;
@@ -443,14 +483,22 @@ static inline void imx_transmit_buffer(struct imx_port *sport)
 		}
 	}
 
-	while (!uart_circ_empty(xmit) &&
-	       !(readl(sport->port.membase + uts_reg(sport)) & UTS_TXFULL)) {
-		/* send xmit->buf[xmit->tail]
-		 * out the port here */
-		writel(xmit->buf[xmit->tail], sport->port.membase + URTX0);
-		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
-		sport->port.icount.tx++;
-	}
+	if (!sport->dma_is_txing) {
+	        /*
+	         * do not modify xmit when DMA is active
+	         * -> otherwise the dma callback would
+	         *    produce a invalid xmit tail
+	         **/
+
+	        while (!uart_circ_empty(xmit) &&
+	               !(readl(sport->port.membase + uts_reg(sport)) & UTS_TXFULL)) {
+		        /* send xmit->buf[xmit->tail]
+		         * out the port here */
+		        writel(xmit->buf[xmit->tail], sport->port.membase + URTX0);
+		        xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
+		        sport->port.icount.tx++;
+	        }
+        }
 
 	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 		uart_write_wakeup(&sport->port);
@@ -565,14 +613,28 @@ static void imx_start_tx(struct uart_port *port)
 	unsigned long temp;
 
 	if (port->rs485.flags & SER_RS485_ENABLED) {
-		temp = readl(port->membase + UCR2);
-		if (port->rs485.flags & SER_RS485_RTS_ON_SEND)
-			imx_port_rts_inactive(sport, &temp);
-		else
-			imx_port_rts_active(sport, &temp);
-		if (!(port->rs485.flags & SER_RS485_RX_DURING_TX))
-			temp &= ~UCR2_RXEN;
-		writel(temp, port->membase + UCR2);
+                temp = readl(port->membase + UCR2);
+
+		if ((-1)==sport->rts_gpio) { /* dedicated rts */
+			if (port->rs485.flags & SER_RS485_RTS_ON_SEND)
+			        imx_port_rts_inactive(sport, &temp);
+		        else
+			        imx_port_rts_active(sport, &temp);
+
+                        if (!(port->rs485.flags & SER_RS485_RX_DURING_TX))
+			        temp &= ~UCR2_RXEN;
+		} else { /* gpio rts */
+		        if (!(port->rs485.flags & SER_RS485_RX_DURING_TX)) {
+		                imx_rs485_rxen_gpio_disable(sport);
+                        }
+
+                        /* enable transmitter */
+                        if (port->rs485.flags & SER_RS485_RTS_ON_SEND)
+			        imx_rs485_rts_gpio_on(sport);
+		        else
+			        imx_rs485_rts_gpio_off(sport);
+		}
+                writel(temp, port->membase + UCR2);
 
 		/* enable transmitter and shifter empty irq */
 		temp = readl(port->membase + UCR4);
@@ -1426,12 +1488,18 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 		}
 	} else if (port->rs485.flags & SER_RS485_ENABLED) {
 		/* disable transmitter */
-		if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
-			imx_port_rts_inactive(sport, &ucr2);
-		else
-			imx_port_rts_active(sport, &ucr2);
+                if ((-1)==sport->rts_gpio) {
+                        if (!(port->rs485.flags & SER_RS485_RTS_AFTER_SEND))
+			        imx_port_rts_inactive(sport, &ucr2);
+                        else
+			        imx_port_rts_active(sport, &ucr2);
+	        } else {
+                        if (!(port->rs485.flags & SER_RS485_RTS_AFTER_SEND))
+			        imx_rs485_rts_gpio_off(sport);
+                        else
+			        imx_rs485_rts_gpio_on(sport);
+	        }
 	}
-
 
 	if (termios->c_cflag & CSTOPB)
 		ucr2 |= UCR2_STPB;
@@ -1664,25 +1732,37 @@ static int imx_rs485_config(struct uart_port *port,
 	rs485conf->delay_rts_after_send = 0;
 
 	/* RTS is required to control the transmitter */
-	if (!sport->have_rtscts)
+	if (!sport->have_rtscts && ((-1)==sport->rts_gpio))
 		rs485conf->flags &= ~SER_RS485_ENABLED;
 
 	if (rs485conf->flags & SER_RS485_ENABLED) {
-		/* disable transmitter */
-		temp = readl(sport->port.membase + UCR2);
-		if (rs485conf->flags & SER_RS485_RTS_AFTER_SEND)
-			imx_port_rts_inactive(sport, &temp);
-		else
-			imx_port_rts_active(sport, &temp);
-		writel(temp, sport->port.membase + UCR2);
+	        /* disable transmitter */
+	        if ((-1)==sport->rts_gpio) { /* dedicated rts */
+		        temp = readl(sport->port.membase + UCR2);
+		        if (rs485conf->flags & SER_RS485_RTS_AFTER_SEND)
+			        imx_port_rts_inactive(sport, &temp);
+		        else
+			        imx_port_rts_active(sport, &temp);
+		        writel(temp, sport->port.membase + UCR2);
+		} else { /* gpio rts */
+                        if (rs485conf->flags & SER_RS485_RTS_AFTER_SEND)
+			        imx_rs485_rts_gpio_on(sport);
+		        else
+			        imx_rs485_rts_gpio_off(sport);
+		}
 	}
 
 	/* Make sure Rx is enabled in case Tx is active with Rx disabled */
-	if (!(rs485conf->flags & SER_RS485_ENABLED) ||
+        if (!(rs485conf->flags & SER_RS485_ENABLED) ||
 	    rs485conf->flags & SER_RS485_RX_DURING_TX) {
-		temp = readl(sport->port.membase + UCR2);
-		temp |= UCR2_RXEN;
-		writel(temp, sport->port.membase + UCR2);
+                temp = readl(sport->port.membase + UCR2);
+                if ((-1)==sport->rts_gpio) { /* dedicated rts */
+                        temp |= UCR2_RXEN;
+                } else { /* gpio rts */
+                        temp |= UCR2_RXEN;
+                        imx_rs485_rxen_gpio_enable(sport);
+		}
+                writel(temp, sport->port.membase + UCR2);
 	}
 
 	port->rs485 = *rs485conf;
@@ -1913,6 +1993,76 @@ static struct console imx_console = {
 #define IMX_CONSOLE	&imx_console
 
 #ifdef CONFIG_OF
+/*
+ * get rs485 mode info from device tree
+ *
+ * Remark: there are two rs485 modes
+ *    1.) Using the RTS and CTS dedicated Pins (standard, part of mainline implemetation)
+ *    2.) Using gpios for RTS and CTS (added by dh-electronics)
+ *
+ *    When a valid value for rts_gpio is available in the device-tree then the second mode
+ *    will be set active. If no rts_gpio is available the first mode is used.
+ */
+static int serial_imx_rs485_probe_dt(struct imx_port *sport,
+                struct platform_device *pdev)
+{
+        struct serial_rs485 rs485conf;
+        struct device_node *np = pdev->dev.of_node;
+        int ret;
+
+        memset(&rs485conf,0,sizeof(rs485conf));
+
+        if (of_get_property(np, "rs485-rx-during-tx", NULL))
+                rs485conf.flags |= SER_RS485_RX_DURING_TX;
+        rs485conf.flags |= SER_RS485_RTS_ON_SEND;
+
+        sport->rts_gpio = of_get_named_gpio(np, "rts_gpio", 0);
+        if (!gpio_is_valid(sport->rts_gpio)) {
+                dev_info(&pdev->dev, "failed to get rts_gpio, assume dedicated RTS/CTS rs485 mode!\n");
+
+                rs485conf.flags |= SER_RS485_ENABLED;
+	        sport->rts_gpio = -1;
+                return imx_rs485_config((struct uart_port*)sport, &rs485conf);
+        }
+
+        sport->rxen_gpio = of_get_named_gpio(np, "rxen_gpio", 0);
+        if (!gpio_is_valid(sport->rxen_gpio)) {
+                dev_err(&pdev->dev, "failed to get rxen_gpio!\n");
+                goto error_out;
+        }
+
+        ret = gpio_request(sport->rts_gpio, "rts_gpio");
+        if (ret < 0) {
+                dev_err(&pdev->dev, "request rts_gpio failed: %d\n", ret);
+                goto error_out;
+        }
+        /* disable transmitter */
+        gpio_direction_output(sport->rts_gpio, 0); /* RTSEN to disable==low*/
+        imx_rs485_rts_gpio_off(sport);
+
+        ret = gpio_request(sport->rxen_gpio, "rxen_gpio");
+        if (ret < 0) {
+                dev_err(&pdev->dev, "request rxen_gpio failed: %d\n", ret);
+                goto error_rxen_gpio;
+        }
+        /* enable receiver */
+        gpio_direction_output(sport->rxen_gpio, 0); /* RXEN to active==low */
+
+        dev_dbg(&pdev->dev, "RS485 RTS GPIO : %d\n", sport->rts_gpio);
+        dev_dbg(&pdev->dev, "RS485 RXen GPIO: %d\n", sport->rxen_gpio);
+
+        /* enable RS485 */
+        rs485conf.flags |= SER_RS485_ENABLED;
+        return imx_rs485_config((struct uart_port*)sport, &rs485conf);
+
+error_rxen_gpio:
+       if (sport->rts_gpio)
+               gpio_free(sport->rts_gpio);
+error_out:
+       dev_err(&pdev->dev, "RS485 failed\n");
+       return 1;
+}
+
 static void imx_console_early_putchar(struct uart_port *port, int ch)
 {
 	while (readl_relaxed(port->membase + IMX21_UTS) & UTS_TXFULL)
@@ -1987,6 +2137,10 @@ static int serial_imx_probe_dt(struct imx_port *sport,
 	if (of_get_property(np, "fsl,dte-mode", NULL))
 		sport->dte_mode = 1;
 
+        if (of_get_property(np, "fsl,rs485-mode", NULL)) {
+                 serial_imx_rs485_probe_dt(sport, pdev);
+        }
+
 	return 0;
 }
 #else
@@ -2048,8 +2202,13 @@ static int serial_imx_probe(struct platform_device *pdev)
 	sport->port.fifosize = 32;
 	sport->port.ops = &imx_pops;
 	sport->port.rs485_config = imx_rs485_config;
-	sport->port.rs485.flags =
-		SER_RS485_RTS_ON_SEND | SER_RS485_RX_DURING_TX;
+	if (!(sport->port.rs485.flags & SER_RS485_ENABLED)) {
+	        /* set default values only when RS485 was
+	         * NOT initialized by device-tree probe */
+	        sport->port.rs485.flags =
+		        SER_RS485_RTS_ON_SEND | SER_RS485_RX_DURING_TX;
+	        sport->rts_gpio = -1;
+	}
 	sport->port.flags = UPF_BOOT_AUTOCONF;
 	init_timer(&sport->timer);
 	sport->timer.function = imx_timeout;
