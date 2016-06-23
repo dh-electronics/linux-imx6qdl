@@ -19,7 +19,7 @@
 		pwms = <&pwm1 0 50000 PWM_POLARITY_INVERTED>;			// PWM polarity can be overwritten by bootargs
 		backlight-sysfs-name = "display";
 		// brightness value  0 1  2  3  4  5  6  7   8   9
-		brightness-levels = <0 16 23 32 45 64 91 128 181 256>;
+		brightness-levels = <0 16 23 32 45 64 91 128 181 255>;
 		default-brightness-level = <7>;					// Default level can be set to 0 by bootargs
 		enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>;			// GPIO number and its polarity can be overwritten by bootargs
 		power-supply = <&reg_24v_ext>;
