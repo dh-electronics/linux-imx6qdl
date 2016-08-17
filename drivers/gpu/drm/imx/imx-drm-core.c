@@ -50,7 +50,7 @@ struct imx_drm_crtc {
 	struct imx_drm_crtc_helper_funcs	imx_drm_helper_funcs;
 };
 
-static int legacyfb_depth = 16;
+static int legacyfb_depth = 32;
 module_param(legacyfb_depth, int, 0444);
 
 int imx_drm_crtc_id(struct imx_drm_crtc *crtc)
