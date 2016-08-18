@@ -209,6 +209,9 @@ void drm_display_mode_to_videomode(const struct drm_display_mode *dmode,
 int of_get_drm_display_mode(struct device_node *np,
 			    struct drm_display_mode *dmode,
 			    int index);
+extern int bootargs_get_drm_display_mode(char **timings,
+					 int size,
+					 struct drm_display_mode *dmode);
 
 void drm_mode_set_name(struct drm_display_mode *mode);
 int drm_mode_hsync(const struct drm_display_mode *mode);
