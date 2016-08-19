@@ -207,7 +207,8 @@ static void imx_ldb_encoder_prepare(struct drm_encoder *encoder)
 		break;
 	}
 
-	imx_drm_set_bus_format(encoder, bus_format);
+	imx_drm_set_bus_config(encoder, bus_format, 2, 3,
+			       imx_ldb_ch->connector.display_info.bus_flags);
 }
 
 static void imx_ldb_encoder_commit(struct drm_encoder *encoder)
