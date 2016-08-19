@@ -24,6 +24,10 @@
 			regulator-always-on;
 		};
 	};
+
+	display-subsystem {							// Headless system
+		status = "disabled";
+	};
 };
 
 &ecspi1 {									// ********** SPI 1 **********
