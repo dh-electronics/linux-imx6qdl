@@ -122,6 +122,8 @@ static int imx_ldb_connector_get_modes(struct drm_connector *connector)
 		mode->type |= DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
 		drm_mode_probed_add(connector, mode);
 		num_modes++;
+
+		connector->display_info.bus_flags = mode->bus_flags;
 	}
 
 	return num_modes;
