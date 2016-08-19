@@ -119,6 +119,7 @@ struct drm_display_mode {
 	int vtotal;
 	int vscan;
 	unsigned int flags;
+	u32 bus_flags;
 
 	/* Addressable image size (may be 0 for projectors, etc.) */
 	int width_mm;
