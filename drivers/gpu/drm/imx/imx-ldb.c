@@ -58,6 +58,11 @@ static int size_bootarg_timings[2] = { 0, 0 };
 module_param_array(timings0, charp, &size_bootarg_timings[0], S_IRUGO);
 module_param_array(timings1, charp, &size_bootarg_timings[1], S_IRUGO);
 
+static bool disable0 = 0;
+static bool disable1 = 0;
+module_param(disable0, bool, S_IRUGO);
+module_param(disable1, bool, S_IRUGO);
+
 struct imx_ldb;
 
 struct imx_ldb_channel {
@@ -583,6 +588,12 @@ static int imx_ldb_bind(struct device *dev, struct device *master, void *data)
 		ret = of_property_read_u32(child, "reg", &i);
 		if (ret || i < 0 || i > 1)
 			return -EINVAL;
+
+		/* The "disable" variables come from bootargs */
+		if( (i == 0) && (disable0) )
+			continue;
+		if( (i == 1) && (disable1) )
+			continue;
 
 		if (dual && i > 0) {
 			dev_warn(dev, "dual-channel mode, ignoring second output\n");
