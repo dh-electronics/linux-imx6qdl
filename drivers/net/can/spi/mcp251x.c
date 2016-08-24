@@ -91,6 +91,15 @@
 
 
 /* MPC251x registers */
+#define BFPCTRL	      0x0C
+#  define BFPCTRL_RX0BF_DOUT_OFF    0x04
+#  define BFPCTRL_RX0BF_DOUT_ON     0x14
+#  define BFPCTRL_RX1BF_DOUT_OFF    0x08
+#  define BFPCTRL_RX1BF_DOUT_ON     0x28
+#  define BFPCTRL_LED_GREEN_ON      BFPCTRL_RX0BF_DOUT_OFF
+#  define BFPCTRL_LED_GREEN_OFF     BFPCTRL_RX0BF_DOUT_ON
+#  define BFPCTRL_LED_RED_ON        BFPCTRL_RX1BF_DOUT_OFF
+#  define BFPCTRL_LED_RED_OFF       BFPCTRL_RX1BF_DOUT_ON
 #define CANSTAT	      0x0e
 #define CANCTRL	      0x0f
 #  define CANCTRL_REQOP_MASK	    0xe0
@@ -665,6 +674,9 @@ static int mcp251x_hw_probe(struct spi_device *spi)
 	if ((ctrl & 0x17) != 0x07)
 		return -ENODEV;
 
+	mcp251x_write_reg(spi, BFPCTRL,
+			  BFPCTRL_LED_GREEN_OFF | BFPCTRL_LED_RED_ON);
+
 	return 0;
 }
 
@@ -720,6 +732,8 @@ static int mcp251x_stop(struct net_device *net)
 	mutex_unlock(&priv->mcp_lock);
 
 	can_led_event(net, CAN_LED_EVENT_STOP);
+	mcp251x_write_reg(spi, BFPCTRL,
+			  BFPCTRL_LED_GREEN_OFF | BFPCTRL_LED_RED_ON);
 
 	return 0;
 }
@@ -982,6 +996,8 @@ static int mcp251x_open(struct net_device *net)
 	}
 
 	can_led_event(net, CAN_LED_EVENT_OPEN);
+	mcp251x_write_reg(spi, BFPCTRL,
+			  BFPCTRL_LED_GREEN_ON | BFPCTRL_LED_RED_OFF);
 
 	netif_wake_queue(net);
 
