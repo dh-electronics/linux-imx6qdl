@@ -34,6 +34,9 @@ static char *timings[TIMINGS_MAX_SIZE] = { [0 ... (TIMINGS_MAX_SIZE-1)] = NULL }
 static int size_bootarg_timings = 0;
 module_param_array(timings, charp, &size_bootarg_timings, S_IRUGO);
 
+static bool disable = 0;
+module_param(disable, bool, S_IRUGO);
+
 struct imx_parallel_display {
 	struct drm_connector connector;
 	struct drm_encoder encoder;
@@ -244,6 +247,10 @@ static int imx_pd_bind(struct device *dev, struct device *master, void *data)
 	struct imx_parallel_display *imxpd;
 	int ret;
 	const char *fmt;
+
+	/* The "disable" variable come from bootargs */
+	if( disable )
+		return 0;
 
 	imxpd = devm_kzalloc(dev, sizeof(*imxpd), GFP_KERNEL);
 	if (!imxpd)
