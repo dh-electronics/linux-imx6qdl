@@ -46,11 +46,17 @@
 
 	display@di0 {								// Parallel display interface
 		compatible = "fsl,imx-parallel-display";
-		crtcs = <&ipu1 0>;
 		interface-pix-fmt = "rgb24";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_dhcom_ipu1>;
 		status = "okay";
+
+		port {
+			display0_in: endpoint {
+				remote-endpoint = <&ipu1_di0_disp0>;
+			};
+		};
+
 		display-timings {
 			// DH display ID 13
 			DataImage_7inch_FG0700G3DSSW {
@@ -122,6 +128,10 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_audmux_ext>;				// AUD3 <-> sgtl5000
 	status = "okay";
+};
+
+&ipu1_di0_disp0 {
+	remote-endpoint = <&display0_in>;
 };
 
 &ldb {										// LVDS display interface
@@ -269,7 +279,6 @@
 				MX6QDL_PAD_DI0_PIN15__IPU1_DI0_PIN15       0x10         // RGB_DATA_EN
 				MX6QDL_PAD_DI0_PIN2__IPU1_DI0_PIN02        0x10         // RGB_HSYNC
 				MX6QDL_PAD_DI0_PIN3__IPU1_DI0_PIN03        0x10         // RGB_VSYNC
-			//	MX6QDL_PAD_DI0_PIN4__IPU1_DI0_PIN04        0x80000000   // Used as GPIO F
 				MX6QDL_PAD_DISP0_DAT0__IPU1_DISP0_DATA00   0x10
 				MX6QDL_PAD_DISP0_DAT1__IPU1_DISP0_DATA01   0x10
 				MX6QDL_PAD_DISP0_DAT2__IPU1_DISP0_DATA02   0x10
