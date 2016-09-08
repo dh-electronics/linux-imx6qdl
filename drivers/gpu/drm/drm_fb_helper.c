@@ -1461,8 +1461,8 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	if (register_framebuffer(info) < 0)
 		return -EINVAL;
 
-	dev_info(fb_helper->dev->dev, "fb%d: %s frame buffer device\n",
-			info->node, info->fix.id);
+	dev_info(fb_helper->dev->dev, "fb%d: %s frame buffer device (%dx%d)\n",
+		 info->node, info->fix.id, sizes.fb_width, sizes.fb_height);
 
 	if (list_empty(&kernel_fb_helper_list)) {
 		register_sysrq_key('v', &sysrq_drm_fb_helper_restore_op);
