@@ -24,6 +24,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/phy.h>
 #include <linux/micrel_phy.h>
 #include <linux/of.h>
@@ -72,6 +73,14 @@
 #define MII_KSZPHY_TX_DATA_PAD_SKEW             0x106
 
 #define PS_TO_REG				200
+
+#define SKEW_REG_UNDEFINED 0xFFFFFFFF
+static unsigned int r260 = SKEW_REG_UNDEFINED;
+static unsigned int r261 = SKEW_REG_UNDEFINED;
+static unsigned int r262 = SKEW_REG_UNDEFINED;
+module_param(r260, uint, S_IRUGO);
+module_param(r261, uint, S_IRUGO);
+module_param(r262, uint, S_IRUGO);
 
 struct kszphy_type {
 	u32 led_mode_reg;
@@ -348,6 +357,29 @@ static int ksz9021_config_init(struct phy_device *phydev)
 	const struct device *dev = &phydev->dev;
 	const struct device_node *of_node = dev->of_node;
 	const struct device *dev_walker;
+	int newval;
+	u16 reg = 0;
+
+	if( r260 != SKEW_REG_UNDEFINED ) {
+		reg = MII_KSZPHY_CLK_CONTROL_PAD_SKEW;
+		newval = r260;
+		printk("Micrel KSZ9021 Gigabit PHY register #%d = 0x%04X (overwritten by bootarg)\n", reg, newval);
+		kszphy_extended_write(phydev, reg, newval);
+	}
+
+	if( r261 != SKEW_REG_UNDEFINED ) {
+		reg = MII_KSZPHY_RX_DATA_PAD_SKEW;
+		newval = r261;
+		printk("Micrel KSZ9021 Gigabit PHY register #%d = 0x%04X (overwritten by bootarg)\n", reg, newval);
+		kszphy_extended_write(phydev, reg, newval);
+	}
+
+	if( r262 != SKEW_REG_UNDEFINED ) {
+		reg = MII_KSZPHY_TX_DATA_PAD_SKEW;
+		newval = r262;
+		printk("Micrel KSZ9021 Gigabit PHY register #%d = 0x%04X (overwritten by bootarg)\n", reg, newval);
+		kszphy_extended_write(phydev, reg, newval);
+	}
 
 	/* The Micrel driver has a deprecated option to place phy OF
 	 * properties in the MAC node. Walk up the tree of devices to
@@ -361,18 +393,21 @@ static int ksz9021_config_init(struct phy_device *phydev)
 	} while (!of_node && dev_walker);
 
 	if (of_node) {
-		ksz9021_load_values_from_of(phydev, of_node,
-				    MII_KSZPHY_CLK_CONTROL_PAD_SKEW,
-				    "txen-skew-ps", "txc-skew-ps",
-				    "rxdv-skew-ps", "rxc-skew-ps");
-		ksz9021_load_values_from_of(phydev, of_node,
-				    MII_KSZPHY_RX_DATA_PAD_SKEW,
-				    "rxd0-skew-ps", "rxd1-skew-ps",
-				    "rxd2-skew-ps", "rxd3-skew-ps");
-		ksz9021_load_values_from_of(phydev, of_node,
-				    MII_KSZPHY_TX_DATA_PAD_SKEW,
-				    "txd0-skew-ps", "txd1-skew-ps",
-				    "txd2-skew-ps", "txd3-skew-ps");
+		if( r260 == SKEW_REG_UNDEFINED )
+			ksz9021_load_values_from_of(phydev, of_node,
+					    MII_KSZPHY_CLK_CONTROL_PAD_SKEW,
+					    "txen-skew-ps", "txc-skew-ps",
+					    "rxdv-skew-ps", "rxc-skew-ps");
+		if( r261 == SKEW_REG_UNDEFINED )
+			ksz9021_load_values_from_of(phydev, of_node,
+					    MII_KSZPHY_RX_DATA_PAD_SKEW,
+					    "rxd0-skew-ps", "rxd1-skew-ps",
+					    "rxd2-skew-ps", "rxd3-skew-ps");
+		if( r262 == SKEW_REG_UNDEFINED )
+			ksz9021_load_values_from_of(phydev, of_node,
+					    MII_KSZPHY_TX_DATA_PAD_SKEW,
+					    "txd0-skew-ps", "txd1-skew-ps",
+					    "txd2-skew-ps", "txd3-skew-ps");
 	}
 	return 0;
 }
