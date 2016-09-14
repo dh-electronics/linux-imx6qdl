@@ -79,16 +79,30 @@
 	status = "okay";
 };
 
-&fec {										// Ethernet 1 (100Mbit)
+#ifndef DHCOM_ETH_1G
+&fec {										// Ethernet (100MBit)
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_enet_100M>;
 	phy-mode = "rmii";
 	phy-reset-gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
 	//phy-reset-duration = 1;						// 1ms is the default value
+	phy-handle = <&ethphy>;
 	//local-mac-address = [00 11 22 33 44 55];				// Is set by the bootloader
 	power-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;				// Power for LAN-Transformer 7499111614A (Isn't yet supported by driver)
 	status = "okay";
+
+	mdio {									// PHY: SMSC LAN8710Ai
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy: ethernet-phy@0 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+			max-speed = <100>;
+		};
+	};
 };
+#endif
 
 #define DHCOM_I2C1                  i2c2					// Use this define in board files!
 #define DHCOM_I2C1_PINCTRL          pinctrl_dhcom_i2c2				// ==> /dev/i2c-1
@@ -325,7 +339,7 @@
 			>;
 		};
 
-		pinctrl_dhcom_enet_100M: enet_100M_grp {			// 100 MBit ethernet
+		pinctrl_dhcom_enet_100M: enet_100M_grp {			// 100MBit ethernet
 			fsl,pins = <
 				MX6QDL_PAD_ENET_MDIO__ENET_MDIO     0x1b0b0
 				MX6QDL_PAD_ENET_MDC__ENET_MDC       0x1b0b0

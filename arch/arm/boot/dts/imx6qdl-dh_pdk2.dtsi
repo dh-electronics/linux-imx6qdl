@@ -203,6 +203,46 @@
 	};
 };
 
+#ifdef DHCOM_HISPEED
+#ifdef DHCOM_ETH_1G
+&fec {										// Ethernet (1GBit)
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_dhcom_enet_1G>;
+	phy-mode = "rgmii";
+	phy-reset-gpios = <&gpio3 29 GPIO_ACTIVE_LOW>;
+	//phy-reset-duration = 1;						// 1ms is the default value
+	phy-handle = <&ethphy>;
+	//local-mac-address = [00 11 22 33 44 55];				// Is set by the bootloader
+	status = "okay";
+
+	mdio {									// PHY: Micrel KSZ9021RN
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy: ethernet-phy@7 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <7>;
+			max-speed = <1000>;
+			ksz9021-skew-step-ps = <120>;	// Overwrite value from old specification (If unused the driver uses 200ps)
+							// KSZ 9021 (0.12ns/step) | KSZ 9031 (0.06ns/step)
+			txen-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			txc-skew-ps = <1800>;		// 0..1800 default=840    | 0..1860 default=900
+			rxdv-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			rxc-skew-ps = <1800>;		// 0..1800 default=840    | 0..1860 default=900
+			rxd0-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			rxd1-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			rxd2-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			rxd3-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			txd0-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			txd1-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			txd2-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+			txd3-skew-ps = <0>;		// 0..1800 default=840    | 0..900  default=420
+		};
+	};
+};
+#endif
+#endif
+
 &DHCOM_I2C1 {									// ********** I2C 1 **********
 	codec: sgtl5000@0a {							// Audio codec SGTL5000XNAA3/R2
 		compatible = "fsl,sgtl5000";
@@ -270,6 +310,29 @@
 				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC      0x130b0
 				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD      0x110b0
 				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS     0x130b0
+			>;
+		};
+
+		pinctrl_dhcom_enet_1G: enet_1G_grp {				// 1GBit ethernet
+			fsl,pins = <
+				MX6QDL_PAD_ENET_MDIO__ENET_MDIO       0x100b0
+				MX6QDL_PAD_ENET_MDC__ENET_MDC         0x100b0
+				MX6QDL_PAD_RGMII_TXC__RGMII_TXC       0x100b0
+				MX6QDL_PAD_RGMII_TD0__RGMII_TD0       0x100b0
+				MX6QDL_PAD_RGMII_TD1__RGMII_TD1       0x100b0
+				MX6QDL_PAD_RGMII_TD2__RGMII_TD2       0x100b0
+				MX6QDL_PAD_RGMII_TD3__RGMII_TD3       0x100b0
+				MX6QDL_PAD_RGMII_TX_CTL__RGMII_TX_CTL 0x100b0
+				MX6QDL_PAD_ENET_REF_CLK__ENET_TX_CLK  0x100b0
+				MX6QDL_PAD_RGMII_RXC__RGMII_RXC       0x1b0b0
+				MX6QDL_PAD_RGMII_RD0__RGMII_RD0       0x1b0b0
+				MX6QDL_PAD_RGMII_RD1__RGMII_RD1       0x1b0b0
+				MX6QDL_PAD_RGMII_RD2__RGMII_RD2       0x1b0b0
+				MX6QDL_PAD_RGMII_RD3__RGMII_RD3       0x1b0b0
+				MX6QDL_PAD_RGMII_RX_CTL__RGMII_RX_CTL 0x1b0b0
+				MX6QDL_PAD_EIM_D29__GPIO3_IO29        0x000b0	// RGMII_RESET
+				MX6QDL_PAD_GPIO_0__GPIO1_IO00         0x000b1	// RGMII_INT
+				MX6QDL_PAD_EIM_D26__GPIO3_IO26        0x000b1	// RGMII_WOL_INT
 			>;
 		};
 
