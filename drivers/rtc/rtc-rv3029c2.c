@@ -194,7 +194,11 @@ rv3029c2_i2c_read_time(struct i2c_client *client, struct rtc_time *tm)
 	        invalid = true;
 	if (tm->tm_mon < 0 || tm->tm_mon > 11)
 	        invalid = true;
-	if (tm->tm_year < 100 || tm->tm_year > 199)
+	/*
+	 * since time_t is (still) signed 32-bit it is limited
+	 * to the 19th january 2038
+	 */
+	if (tm->tm_year < 100 || tm->tm_year >= 138)
 	        invalid = true;
 	if (tm->tm_wday < 0 || tm->tm_wday > 6)
 	        invalid = true;
