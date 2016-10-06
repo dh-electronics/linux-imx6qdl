@@ -287,6 +287,7 @@
 	vbus-supply = <&reg_usb_h1_vbus>;
 	status = "okay";
 	dr_mode = "host";
+//	maximum-speed = "full-speed";						// Reducing speed (full-speed = 12M)
 };
 
 &usbotg {									// USB OTG
@@ -296,6 +297,7 @@
 	disable-over-current;
 	status = "okay";
 	dr_mode = "otg";							// "host", "peripheral" or "otg" default = "otg"
+//	maximum-speed = "full-speed";						// Reducing speed (full-speed = 12M)
 };
 
 &usdhc2 {									// SD card (external via DHCOM)
