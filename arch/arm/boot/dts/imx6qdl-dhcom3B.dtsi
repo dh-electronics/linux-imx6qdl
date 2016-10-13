@@ -298,7 +298,10 @@
 
 	imx6qdl-dhcom {
 		pinctrl_dhcom_hog_base: hog_base_grp {
-			fsl,pins = <
+			fsl,pins = <                                       	// DHCOM HW Version  | 100/200 | 300 | 400 |
+				MX6QDL_PAD_EIM_A19__GPIO2_IO19      0x120B0	// Code_HW_0 (#51)        0       1     0
+				MX6QDL_PAD_EIM_A23__GPIO6_IO06      0x120B0	// Code_HW_1 (#166)       0       0     1
+				MX6QDL_PAD_EIM_A22__GPIO2_IO16      0x120B0	// Code_HW_2 (#48)        0       0     0
 				MX6QDL_PAD_EIM_A16__GPIO2_IO22      0x120B0	// HW300: Code_DDR3_0 (#54)
 				MX6QDL_PAD_EIM_A17__GPIO2_IO21      0x120B0	// HW300: Code_DDR3_1 (#53)
 			>;
