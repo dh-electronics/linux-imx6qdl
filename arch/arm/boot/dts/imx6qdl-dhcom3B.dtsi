@@ -299,8 +299,8 @@
 	imx6qdl-dhcom {
 		pinctrl_dhcom_hog_base: hog_base_grp {
 			fsl,pins = <
-				MX6QDL_PAD_EIM_A16__GPIO2_IO22      0x400120B0	// HW300: Code_DDR3_0 (#54)
-				MX6QDL_PAD_EIM_A17__GPIO2_IO21      0x400120B0	// HW300: Code_DDR3_1 (#53)
+				MX6QDL_PAD_EIM_A16__GPIO2_IO22      0x120B0	// HW300: Code_DDR3_0 (#54)
+				MX6QDL_PAD_EIM_A17__GPIO2_IO21      0x120B0	// HW300: Code_DDR3_1 (#53)
 			>;
 		};
 
