@@ -31,6 +31,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/regmap.h>
 #include <linux/gpio/consumer.h>
+#include <linux/of_gpio.h>
 #include "tsc200x-core.h"
 
 /*
@@ -117,6 +118,14 @@ struct tsc200x {
 	void			(*set_reset)(bool enable);
 	int			(*tsc200x_cmd)(struct device *dev, u8 cmd);
 	int			irq;
+
+	bool			pintdav_gpio_valid;
+	int			pintdav_gpio;
+
+	unsigned int		ref_voltage_mV;
+	int			aux_value;
+
+	atomic_t		aux_lock;
 };
 
 static void tsc200x_update_pen_state(struct tsc200x *ts,
@@ -149,6 +158,10 @@ static irqreturn_t tsc200x_irq_thread(int irq, void *_ts)
 	unsigned int pressure;
 	struct tsc200x_data tsdata;
 	int error;
+
+	/* Do nothing if we sample the aux input */
+	if (atomic_read(&ts->aux_lock) == true)
+		goto out;
 
 	/* read the coordinates */
 	error = regmap_bulk_read(ts->regmap, TSC200X_REG_X, &tsdata,
@@ -222,9 +235,22 @@ static void tsc200x_start_scan(struct tsc200x *ts)
 	ts->tsc200x_cmd(ts->dev, TSC200X_CMD_NORMAL);
 }
 
+static void tsc200x_start_aux(struct tsc200x *ts)
+{
+	regmap_write(ts->regmap, TSC200X_REG_CFR0, TSC200X_CFR0_INITVALUE);
+	regmap_write(ts->regmap, TSC200X_REG_CFR1, TSC200X_CFR1_INITVALUE);
+	regmap_write(ts->regmap, TSC200X_REG_CFR2, TSC200X_CFR2_INITVALUE_AUX);
+	ts->tsc200x_cmd(ts->dev, TSC200X_CMD_NORMAL | TSC200X_CMD_MEAS_AUX);
+}
+
 static void tsc200x_stop_scan(struct tsc200x *ts)
 {
 	ts->tsc200x_cmd(ts->dev, TSC200X_CMD_STOP);
+}
+
+static void tsc200x_sw_reset(struct tsc200x *ts)
+{
+	ts->tsc200x_cmd(ts->dev, TSC200X_CMD_SWRST);
 }
 
 static void tsc200x_set_reset(struct tsc200x *ts, bool enable)
@@ -364,6 +390,108 @@ static umode_t tsc200x_attr_is_visible(struct kobject *kobj,
 static const struct attribute_group tsc200x_attr_group = {
 	.is_visible	= tsc200x_attr_is_visible,
 	.attrs		= tsc200x_attrs,
+};
+
+static ssize_t tsc200x_aux_value_mV_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct tsc200x *ts = dev_get_drvdata(dev);
+	bool valid_value_available;
+	int aux_value_mV;
+
+	/* If we couldn't get a value */
+	ts->aux_value = AUX_VALUE_INVALID;
+
+	mutex_lock(&ts->mutex);
+
+	if (!ts->suspended) {
+		/* Wait for pending IRQ handler */
+		synchronize_irq(ts->irq);
+
+		/* Touch measurement inactive */
+		if ( !timer_pending(&ts->penup_timer) ) {
+			atomic_set(&ts->aux_lock, true);
+
+			if (ts->opened)
+				__tsc200x_disable(ts);
+			tsc200x_sw_reset(ts);
+			tsc200x_start_aux(ts);
+
+			/* Time for A/D conversion */
+			usleep_range(300, 500);
+
+			/* Value is valid if PINTDAV is LOW */
+			valid_value_available = true;
+			if (ts->pintdav_gpio_valid) /* Get PINTDAV state before stopping TSC */
+				valid_value_available = !gpio_get_value(ts->pintdav_gpio);
+
+			tsc200x_stop_scan(ts); /* Stop TSC before reading value */
+
+			if (valid_value_available)
+				regmap_read(ts->regmap, TSC200X_REG_AUX, &ts->aux_value);
+			else
+				ts->aux_value = AUX_VALUE_INVALID;
+
+			tsc200x_sw_reset(ts);
+			if (ts->opened)
+				__tsc200x_enable(ts);
+
+			atomic_set(&ts->aux_lock, false);
+		}
+	}
+
+	mutex_unlock(&ts->mutex);
+
+	if (ts->aux_value != AUX_VALUE_INVALID)
+		aux_value_mV = (ts->ref_voltage_mV * ts->aux_value) / 4095;
+	else
+		aux_value_mV = AUX_VALUE_INVALID;
+
+	return sprintf(buf, "%d\n", aux_value_mV);
+}
+
+static DEVICE_ATTR(value_mV, S_IRUGO, tsc200x_aux_value_mV_show, NULL);
+
+static ssize_t tsc200x_aux_ref_voltage_show(struct device *dev,
+					    struct device_attribute *attr,
+					    char *buf)
+{
+	struct tsc200x *ts = dev_get_drvdata(dev);
+
+	return sprintf(buf, "%d\n", ts->ref_voltage_mV);
+}
+
+static ssize_t tsc200x_aux_ref_voltage_store(struct device *dev,
+					     struct device_attribute *attr,
+					     const char *buf, size_t size)
+{
+	struct tsc200x *ts = dev_get_drvdata(dev);
+	unsigned int val;
+	int ret;
+
+	ret = kstrtouint(buf, 0, &val);
+	if (ret)
+		return ret;
+
+	ts->ref_voltage_mV = val;
+
+	return ret ? : size;
+}
+
+static DEVICE_ATTR(ref_voltage_mV, S_IWUSR | S_IRUGO,
+		   tsc200x_aux_ref_voltage_show,
+		   tsc200x_aux_ref_voltage_store);
+
+static struct attribute *tsc200x_aux_attrs[] = {
+	&dev_attr_value_mV.attr,
+	&dev_attr_ref_voltage_mV.attr,
+	NULL
+};
+
+static const struct attribute_group tsc200x_aux_attr_group = {
+	.name		= "adc_aux",
+	.attrs		= tsc200x_aux_attrs,
 };
 
 static void tsc200x_esd_work(struct work_struct *work)
@@ -519,6 +647,21 @@ int tsc200x_probe(struct device *dev, int irq, const struct input_id *tsc_id,
 	ts->tsc200x_cmd = tsc200x_cmd;
 	ts->x_plate_ohm = x_plate_ohm;
 	ts->esd_timeout = esd_timeout;
+	ts->ref_voltage_mV = DEF_AUX_REF_VALUE;
+	ts->aux_value = AUX_VALUE_INVALID;
+
+	atomic_set(&ts->aux_lock, false);
+
+	ts->pintdav_gpio_valid = false;
+	ts->pintdav_gpio = of_get_named_gpio(dev->of_node, "interrupts-extended", 0);
+	if (gpio_is_valid(ts->pintdav_gpio))
+		if (gpio_request(ts->pintdav_gpio, "tsc200x_pintdav") == 0)
+			if (gpio_direction_input(ts->pintdav_gpio) == 0)
+				ts->pintdav_gpio_valid = true;
+
+	dev_info(dev, "IRQ #%d, GPIO #%d (%d.%d)\n",
+			irq, ts->pintdav_gpio,
+			(ts->pintdav_gpio / 32) + 1, ts->pintdav_gpio % 32 );
 
 	ts->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ts->reset_gpio)) {
@@ -602,16 +745,25 @@ int tsc200x_probe(struct device *dev, int irq, const struct input_id *tsc_id,
 		goto disable_regulator;
 	}
 
+	error = sysfs_create_group(&dev->kobj, &tsc200x_aux_attr_group);
+	if (error) {
+		dev_err(dev,
+			"Failed to create sysfs attributes, err: %d\n", error);
+		goto err_remove_sysfs;
+	}
+
 	error = input_register_device(ts->idev);
 	if (error) {
 		dev_err(dev,
 			"Failed to register input device, err: %d\n", error);
-		goto err_remove_sysfs;
+		goto err_remove_sysfs_aux;
 	}
 
 	irq_set_irq_wake(irq, 1);
 	return 0;
 
+err_remove_sysfs_aux:
+	sysfs_remove_group(&dev->kobj, &tsc200x_aux_attr_group);
 err_remove_sysfs:
 	sysfs_remove_group(&dev->kobj, &tsc200x_attr_group);
 disable_regulator:
@@ -625,6 +777,7 @@ int tsc200x_remove(struct device *dev)
 {
 	struct tsc200x *ts = dev_get_drvdata(dev);
 
+	sysfs_remove_group(&dev->kobj, &tsc200x_aux_attr_group);
 	sysfs_remove_group(&dev->kobj, &tsc200x_attr_group);
 
 	if (ts->vio)

@@ -3,6 +3,8 @@
 
 /* control byte 1 */
 #define TSC200X_CMD			0x80
+#define TSC200X_CMD_MEAS_AUX		0x28
+#define TSC200X_CMD_SWRST		0x02
 #define TSC200X_CMD_NORMAL		0x00
 #define TSC200X_CMD_STOP		0x01
 #define TSC200X_CMD_12BIT		0x04
@@ -47,16 +49,22 @@
 #define TSC200X_CFR1_INITVALUE		TSC200X_CFR1_BATCHDELAY_4MS
 
 /* configuration register 2 */
+#define TSC200X_CFR2_MAVE_AUX		0x0002
 #define TSC200X_CFR2_MAVE_Z		0x0004
 #define TSC200X_CFR2_MAVE_Y		0x0008
 #define TSC200X_CFR2_MAVE_X		0x0010
 #define TSC200X_CFR2_AVG_7		0x0800
 #define TSC200X_CFR2_MEDIUM_15		0x3000
+#define TSC200X_CFR2_PINTS0		0x4000
 #define TSC200X_CFR2_INITVALUE		(TSC200X_CFR2_MAVE_X	| \
 					 TSC200X_CFR2_MAVE_Y	| \
 					 TSC200X_CFR2_MAVE_Z	| \
 					 TSC200X_CFR2_MEDIUM_15	| \
 					 TSC200X_CFR2_AVG_7)
+#define TSC200X_CFR2_INITVALUE_AUX	(TSC200X_CFR2_MAVE_AUX	| \
+					 TSC200X_CFR2_MEDIUM_15	| \
+					 TSC200X_CFR2_AVG_7	| \
+					 TSC200X_CFR2_PINTS0)
 
 #define MAX_12BIT			0xfff
 #define TSC200X_DEF_X_FUZZ		4
@@ -66,6 +74,9 @@
 
 #define TSC2005_SPI_MAX_SPEED_HZ	10000000
 #define TSC200X_PENUP_TIME_MS		40
+
+#define DEF_AUX_REF_VALUE		3270 /* Default reference voltage value in mV */
+#define AUX_VALUE_INVALID		(-1) /* Return this value if measurement failed */
 
 extern const struct regmap_config tsc200x_regmap_config;
 extern const struct dev_pm_ops tsc200x_pm_ops;
