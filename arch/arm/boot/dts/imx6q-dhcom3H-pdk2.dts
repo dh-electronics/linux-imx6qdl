@@ -35,7 +35,7 @@
 // Enable RS485 for UART2 (ttymxc4)
 //#include "imx6qdl-dhcom_cfg-rs485.dtsi"
 
-// Eenables WEIM example config with UIO-Driver
+// Enables WEIM example config with UIO-Driver
 //#include "imx6qdl-dhcom_cfg-weim.dtsi"
 
 
