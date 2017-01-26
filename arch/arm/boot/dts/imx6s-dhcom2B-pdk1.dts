@@ -24,13 +24,6 @@
 // HW200 base
 #include "imx6qdl-dhcom2B.dtsi"
 
-// Memory 512MB DDR3 RAM
-/ {
-	memory {
-		reg = <0x10000000 0x20000000>;
-	};
-};
-
 // Special configurations
 //**********************************************************
 // Enables NAND, disables eMMC

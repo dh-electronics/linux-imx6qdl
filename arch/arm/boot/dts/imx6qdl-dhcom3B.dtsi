@@ -19,6 +19,10 @@
 		mmcblk3 = &usdhc1; 						// Unused at dhcom, put at the end to be compatible with uboot
 	};
 
+	memory {
+		reg = <0 0>;							// Will be filled by uboot
+	};
+
 	regulators {
 		compatible = "simple-bus";
 

@@ -27,13 +27,6 @@
 // HW300 hispeed
 #include "imx6qdl-dhcom3H.dtsi"
 
-// Memory 512MB DDR3 RAM
-/ {
-	memory {
-		reg = <0x10000000 0x20000000>;
-	};
-};
-
 // Special configurations
 //**********************************************************
 // Enables NAND, disables eMMC
