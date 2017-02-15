@@ -2342,7 +2342,7 @@ signed long bootargs_get_property_value( char **timings, int size, const char *p
 			continue; /* Length doesn't match */
 
 		if( strncmp( timings[index], property_name, name_len ) == 0 ) {
-			if( kstrtol( timings[index] + name_len + 1, 0, &res ) != 0 ) {
+			if( kstrtol( timings[index] + name_len + 1, 10, &res ) != 0 ) {
 				res = default_value;
 				if( default_value >= 0 )
 					printk("  Warning: Could not get value from \"%s\" => set default (%ld)\n",
