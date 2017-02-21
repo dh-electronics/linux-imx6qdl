@@ -673,7 +673,7 @@ EXPORT_SYMBOL_GPL(drm_display_mode_to_videomode);
  * @dmode: will be set to the return value
  */
 int bootargs_get_drm_display_mode(char **timings, int size,
-				 struct drm_display_mode *dmode)
+				  struct drm_display_mode *dmode)
 {
 	struct videomode vm;
 	int display_id = 0;
