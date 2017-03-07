@@ -11,3 +11,8 @@
 #include "imx6qdl-dhcom3B.dtsi"							// Include interfaces from basic device tree
 #define DHCOM_HISPEED								// Use it in other device tree files, e.g. imx6qdl-dh_xxx.dtsi
 
+#ifdef IMX6_CPU_DUAL_QUAD
+&sata {
+	status = "okay";
+};
+#endif
