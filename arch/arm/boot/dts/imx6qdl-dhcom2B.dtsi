@@ -269,6 +269,10 @@
 	pinctrl-names = "default";						// ==> /dev/ttymxc0
 	pinctrl-0 = <&pinctrl_dhcom_uart1>;
 	fsl,uart-has-rtscts;
+	dtr-gpios = <&gpio3 24 GPIO_ACTIVE_LOW>;
+	dsr-gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
+	dcd-gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+	rng-gpios = <&gpio2 31 GPIO_ACTIVE_LOW>;
 	status = "okay";
 };
 
@@ -444,11 +448,11 @@
 				MX6QDL_PAD_SD3_DAT7__UART1_TX_DATA  0x1b0b1
 				MX6QDL_PAD_SD3_DAT6__UART1_RX_DATA  0x1b0b1
 				MX6QDL_PAD_EIM_D20__UART1_RTS_B     0x1b0b1
-				MX6QDL_PAD_EIM_D19__UART1_CTS_B     0x1b0b1
-				MX6QDL_PAD_EIM_D23__UART1_DCD_B     0x1b0b1
-				MX6QDL_PAD_EIM_D24__UART1_DTR_B     0x1b0b1
-				MX6QDL_PAD_EIM_D25__UART1_DSR_B     0x1b0b1
-				MX6QDL_PAD_EIM_EB3__UART1_RI_B      0x1b0b1
+				MX6QDL_PAD_EIM_D19__UART1_CTS_B     0x4001b0b1
+				MX6QDL_PAD_EIM_D23__GPIO3_IO23      0x4001b0b1	// DCD
+				MX6QDL_PAD_EIM_D24__GPIO3_IO24      0x4001b0b1	// DTR
+				MX6QDL_PAD_EIM_D25__GPIO3_IO25      0x4001b0b1	// DSR
+				MX6QDL_PAD_EIM_EB3__GPIO2_IO31      0x4001b0b1	// RI
 			>;
 		};
 
@@ -464,7 +468,7 @@
 				MX6QDL_PAD_CSI0_DAT14__UART5_TX_DATA 0x1b0b1
 				MX6QDL_PAD_CSI0_DAT15__UART5_RX_DATA 0x1b0b1
 				MX6QDL_PAD_CSI0_DAT18__UART5_RTS_B   0x1b0b1
-				MX6QDL_PAD_CSI0_DAT19__UART5_CTS_B   0x1b0b1
+				MX6QDL_PAD_CSI0_DAT19__UART5_CTS_B   0x4001b0b1
 			>;
 		};
 
