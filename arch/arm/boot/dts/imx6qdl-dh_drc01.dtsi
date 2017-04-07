@@ -14,18 +14,6 @@
 #include <dt-bindings/clock/imx6qdl-clock.h>
 
 / {
-	bl_display {
-		compatible = "pwm-backlight";
-		pwms = <&pwm1 0 50000 PWM_POLARITY_INVERTED>;			// PWM polarity can be overwritten by bootargs
-		backlight-sysfs-name = "display";
-		// brightness value  0 1  2  3  4  5  6  7   8   9   10
-		brightness-levels = <0 16 22 30 40 55 75 102 138 188 255>;
-		default-brightness-level = <8>;					// Default level can be set to 0 by bootargs
-		enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>;			// GPIO number and its polarity can be overwritten by bootargs
-		power-supply = <&reg_24v_ext>;
-		status = "okay";
-	};
-
 	regulators {
 		reg_24v_ext: 24V_EXT {
 			compatible = "regulator-fixed";
@@ -172,8 +160,8 @@
 				MX6QDL_PAD_CSI0_DAT17__GPIO6_IO03   0x400120B0  // GPIO D
 				MX6QDL_PAD_GPIO_19__GPIO4_IO05      0x400120B0  // GPIO E
 				MX6QDL_PAD_DI0_PIN4__GPIO4_IO20     0x400120B0  // GPIO F
-				MX6QDL_PAD_EIM_D27__GPIO3_IO27      0x120B0     // GPIO G -> Backlight Enable
-				MX6QDL_PAD_KEY_ROW0__GPIO4_IO07     0x120B0     // GPIO H
+				MX6QDL_PAD_EIM_D27__GPIO3_IO27      0x400120B0  // GPIO G
+				MX6QDL_PAD_KEY_ROW0__GPIO4_IO07     0x400120B0  // GPIO H
 				MX6QDL_PAD_KEY_COL1__GPIO4_IO08     0x400120B0  // GPIO I
 				MX6QDL_PAD_NANDF_CS1__GPIO6_IO14    0x400120B0  // GPIO J
 				MX6QDL_PAD_NANDF_CS2__GPIO6_IO15    0x400120B0  // GPIO K
@@ -189,7 +177,7 @@
 				MX6QDL_PAD_SD1_CLK__GPIO1_IO20      0x400120B0  // GPIO U
 				MX6QDL_PAD_CSI0_PIXCLK__GPIO5_IO18  0x400120B0  // GPIO V
 				MX6QDL_PAD_CSI0_MCLK__GPIO5_IO19    0x400120B0  // GPIO W
-				MX6QDL_PAD_KEY_COL0__GPIO4_IO06     0x400120B0  // INT_HIGHEST_PRIORITY
+				MX6QDL_PAD_KEY_COL0__GPIO4_IO06     0x400120B0  // INT_HIGHEST_PRIORITY -> spi2can
 			>;
 		};
 
