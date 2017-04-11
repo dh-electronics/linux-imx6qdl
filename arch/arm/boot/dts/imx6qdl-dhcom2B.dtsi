@@ -339,7 +339,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_hog_base>;
 
-	imx6qdl-dhcom {
+	imx6qdl-dhcom_base {
 		pinctrl_dhcom_hog_base: hog_base_grp {
 			fsl,pins = <                                       	// DHCOM HW Version  | 100/200 | 300 | 400 |
 				MX6QDL_PAD_EIM_A19__GPIO2_IO19      0x120B0	// Code_HW_0 (#51)        0       1     0

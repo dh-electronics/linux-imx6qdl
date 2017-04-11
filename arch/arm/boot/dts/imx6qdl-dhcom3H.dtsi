@@ -11,8 +11,16 @@
 #include "imx6qdl-dhcom3B.dtsi"							// Include interfaces from basic device tree
 #define DHCOM_HISPEED								// Use it in other device tree files, e.g. imx6qdl-dh_xxx.dtsi
 
+// Interfaces of the DHCOM hispeed connector will be configured here with the
+// status "disabled". If you need the interface set it to status "okay" in the
+// corresponding board file.
+&pcie {
+	status = "disabled";
+};
+
+// Only for DUAL and QUAD architecture
 #ifdef IMX6_CPU_DUAL_QUAD
 &sata {
-	status = "okay";
+	status = "disabled";
 };
 #endif

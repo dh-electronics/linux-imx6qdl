@@ -203,7 +203,123 @@
 	};
 };
 
+&DHCOM_I2C1 {									// ********** I2C 1 **********
+	codec: sgtl5000@0a {							// Audio codec SGTL5000XNAA3/R2
+		compatible = "fsl,sgtl5000";
+		reg = <0x0a>;
+		clocks = <&clk_ext_audio_codec>;				// External clock
+		VDDA-supply = <&reg_3p3v>;
+		VDDIO-supply = <&reg_3p3v>;
+	};
+
+	tmg120_ts@20 {								// Touch controller "DH-Touch"
+		compatible = "dh,tmg120_ts";
+		reg = <0x20>;
+		interrupt-parent = <&gpio4>;
+		interrupts = <7 2>;
+		status = "okay";
+	};
+};
+
+&DHCOM_I2C2 {									// ********** I2C 2 **********
+};
+
+&DHCOM_I2C_ONMODULE {								// ****** I2C onModule *******
+	tsc2004@49 {								// Touch controller TI TSC2014 (on Board)
+		status = "okay";
+	};
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_dhcom_hog_base &pinctrl_dhcom_hog>;
+
+	imx6qdl-pdk2_base {
+		pinctrl_dhcom_hog: hog_grp {
+			fsl,pins = <
+				MX6QDL_PAD_GPIO_2__GPIO1_IO02       0x400120B0	// GPIO A
+				MX6QDL_PAD_GPIO_4__GPIO1_IO04       0x400120B0	// GPIO B
+				MX6QDL_PAD_GPIO_5__GPIO1_IO05       0x400120B0	// GPIO C
+				MX6QDL_PAD_CSI0_DAT17__GPIO6_IO03   0x400120B0	// GPIO D
+				MX6QDL_PAD_GPIO_19__GPIO4_IO05      0x400120B0	// GPIO E
+				MX6QDL_PAD_DI0_PIN4__GPIO4_IO20     0x400120B0	// GPIO F
+				MX6QDL_PAD_EIM_D27__GPIO3_IO27      0x120B0	// GPIO G -> Backlight Enable
+				MX6QDL_PAD_KEY_ROW0__GPIO4_IO07     0x120B0	// GPIO H -> Touch Interrupt picoITX dh-touch
+				MX6QDL_PAD_KEY_COL1__GPIO4_IO08     0x400120B0	// GPIO I
+				MX6QDL_PAD_NANDF_CS1__GPIO6_IO14    0x400120B0	// GPIO J -> PCIe Reset (if hispeed device tree)
+				MX6QDL_PAD_NANDF_CS2__GPIO6_IO15    0x400120B0	// GPIO K
+				MX6QDL_PAD_KEY_ROW1__GPIO4_IO09     0x400120B0	// GPIO L
+				MX6QDL_PAD_SD3_DAT5__GPIO7_IO00     0x400120B0	// GPIO M
+				MX6QDL_PAD_SD3_DAT4__GPIO7_IO01     0x400120B0	// GPIO N
+				MX6QDL_PAD_CSI0_VSYNC__GPIO5_IO21   0x400120B0	// GPIO O
+				MX6QDL_PAD_GPIO_18__GPIO7_IO13      0x400120B0	// GPIO P
+				MX6QDL_PAD_SD1_CMD__GPIO1_IO18      0x400120B0	// GPIO Q
+				MX6QDL_PAD_SD1_DAT0__GPIO1_IO16     0x400120B0	// GPIO R
+				MX6QDL_PAD_SD1_DAT1__GPIO1_IO17     0x400120B0	// GPIO S
+				MX6QDL_PAD_SD1_DAT2__GPIO1_IO19     0x400120B0	// GPIO T
+				MX6QDL_PAD_SD1_CLK__GPIO1_IO20      0x400120B0	// GPIO U
+				MX6QDL_PAD_CSI0_PIXCLK__GPIO5_IO18  0x400120B0	// GPIO V
+				MX6QDL_PAD_CSI0_MCLK__GPIO5_IO19    0x400120B0	// GPIO W
+				MX6QDL_PAD_KEY_COL0__GPIO4_IO06     0x400120B0	// INT_HIGHEST_PRIORITY
+			>;
+		};
+
+		pinctrl_dhcom_audmux_ext: audmux_ext_grp { 			// HW300: Audio on external clock
+			fsl,pins = <
+				MX6QDL_PAD_CSI0_DAT7__AUD3_RXD      0x130b0
+				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC      0x130b0
+				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD      0x110b0
+				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS     0x130b0
+			>;
+		};
+
+		pinctrl_dhcom_pwm1: pwm1_grp {
+			fsl,pins = <
+				MX6QDL_PAD_SD1_DAT3__PWM1_OUT       0x1b0b1
+			>;
+		};
+
+		pinctrl_dhcom_ipu1: ipu1_grp {
+			fsl,pins = <
+				MX6QDL_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK 0x10	// RGB_PCLK
+				MX6QDL_PAD_DI0_PIN15__IPU1_DI0_PIN15       0x10	// RGB_DATA_EN
+				MX6QDL_PAD_DI0_PIN2__IPU1_DI0_PIN02        0x10	// RGB_HSYNC
+				MX6QDL_PAD_DI0_PIN3__IPU1_DI0_PIN03        0x10	// RGB_VSYNC
+				MX6QDL_PAD_DISP0_DAT0__IPU1_DISP0_DATA00   0x10
+				MX6QDL_PAD_DISP0_DAT1__IPU1_DISP0_DATA01   0x10
+				MX6QDL_PAD_DISP0_DAT2__IPU1_DISP0_DATA02   0x10
+				MX6QDL_PAD_DISP0_DAT3__IPU1_DISP0_DATA03   0x10
+				MX6QDL_PAD_DISP0_DAT4__IPU1_DISP0_DATA04   0x10
+				MX6QDL_PAD_DISP0_DAT5__IPU1_DISP0_DATA05   0x10
+				MX6QDL_PAD_DISP0_DAT6__IPU1_DISP0_DATA06   0x10
+				MX6QDL_PAD_DISP0_DAT7__IPU1_DISP0_DATA07   0x10
+				MX6QDL_PAD_DISP0_DAT8__IPU1_DISP0_DATA08   0x10
+				MX6QDL_PAD_DISP0_DAT9__IPU1_DISP0_DATA09   0x10
+				MX6QDL_PAD_DISP0_DAT10__IPU1_DISP0_DATA10  0x10
+				MX6QDL_PAD_DISP0_DAT11__IPU1_DISP0_DATA11  0x10
+				MX6QDL_PAD_DISP0_DAT12__IPU1_DISP0_DATA12  0x10
+				MX6QDL_PAD_DISP0_DAT13__IPU1_DISP0_DATA13  0x10
+				MX6QDL_PAD_DISP0_DAT14__IPU1_DISP0_DATA14  0x10
+				MX6QDL_PAD_DISP0_DAT15__IPU1_DISP0_DATA15  0x10
+				MX6QDL_PAD_DISP0_DAT16__IPU1_DISP0_DATA16  0x10
+				MX6QDL_PAD_DISP0_DAT17__IPU1_DISP0_DATA17  0x10
+				MX6QDL_PAD_DISP0_DAT18__IPU1_DISP0_DATA18  0x10
+				MX6QDL_PAD_DISP0_DAT19__IPU1_DISP0_DATA19  0x10
+				MX6QDL_PAD_DISP0_DAT20__IPU1_DISP0_DATA20  0x10
+				MX6QDL_PAD_DISP0_DAT21__IPU1_DISP0_DATA21  0x10
+				MX6QDL_PAD_DISP0_DAT22__IPU1_DISP0_DATA22  0x10
+				MX6QDL_PAD_DISP0_DAT23__IPU1_DISP0_DATA23  0x10
+			>;
+		};
+	};
+};
+
+
+// Interfaces of the DHCOM hispeed connector will be activated here. Baord
+// specific configuration can also be made here. This section is only active if
+// you load an hispeed device tree e.g. imx6q-dhcom4H-pdk2
 #ifdef DHCOM_HISPEED
+
 #ifdef DHCOM_ETH_1G
 &fec {										// Ethernet (1GBit)
 	pinctrl-names = "default";
@@ -241,75 +357,26 @@
 	};
 };
 #endif
+
+&pcie {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_dhcom_pcie>;
+	reset-gpio = <&gpio6 14 GPIO_ACTIVE_LOW>;				// GPIO J
+	status = "okay";
+};
+
+// Only for DUAL and QUAD architecture
+#ifdef IMX6_CPU_DUAL_QUAD
+&sata {
+	status = "okay";
+};
 #endif
 
-&DHCOM_I2C1 {									// ********** I2C 1 **********
-	codec: sgtl5000@0a {							// Audio codec SGTL5000XNAA3/R2
-		compatible = "fsl,sgtl5000";
-		reg = <0x0a>;
-		clocks = <&clk_ext_audio_codec>;				// External clock
-		VDDA-supply = <&reg_3p3v>;
-		VDDIO-supply = <&reg_3p3v>;
-	};
-
-	tmg120_ts@20 {								// Touch controller "DH-Touch"
-		compatible = "dh,tmg120_ts";
-		reg = <0x20>;
-		interrupt-parent = <&gpio4>;
-		interrupts = <7 2>;
-		status = "okay";
-	};
-};
-
-&DHCOM_I2C2 {									// ********** I2C 2 **********
-};
-
-&DHCOM_I2C_ONMODULE {								// ****** I2C onModule *******
-	tsc2004@49 {								// Touch controller TI TSC2014 (on Board)
-		status = "okay";
-	};
-};
-
 &iomuxc {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_dhcom_hog_base &pinctrl_dhcom_hog>;
-
-	imx6qdl-pdk {
-		pinctrl_dhcom_hog: hog_grp {
+	imx6qdl-pdk2_hispeed {
+		pinctrl_dhcom_pcie: pcie_grp {
 			fsl,pins = <
-				MX6QDL_PAD_GPIO_2__GPIO1_IO02       0x400120B0  // GPIO A
-				MX6QDL_PAD_GPIO_4__GPIO1_IO04       0x400120B0  // GPIO B
-				MX6QDL_PAD_GPIO_5__GPIO1_IO05       0x400120B0  // GPIO C
-				MX6QDL_PAD_CSI0_DAT17__GPIO6_IO03   0x400120B0  // GPIO D
-				MX6QDL_PAD_GPIO_19__GPIO4_IO05      0x400120B0  // GPIO E
-				MX6QDL_PAD_DI0_PIN4__GPIO4_IO20     0x400120B0  // GPIO F
-				MX6QDL_PAD_EIM_D27__GPIO3_IO27      0x120B0     // GPIO G -> Backlight Enable
-				MX6QDL_PAD_KEY_ROW0__GPIO4_IO07     0x120B0     // GPIO H -> Touch Interrupt picoITX dh-touch
-				MX6QDL_PAD_KEY_COL1__GPIO4_IO08     0x400120B0  // GPIO I
-				MX6QDL_PAD_NANDF_CS1__GPIO6_IO14    0x400120B0  // GPIO J
-				MX6QDL_PAD_NANDF_CS2__GPIO6_IO15    0x400120B0  // GPIO K
-				MX6QDL_PAD_KEY_ROW1__GPIO4_IO09     0x400120B0  // GPIO L
-				MX6QDL_PAD_SD3_DAT5__GPIO7_IO00     0x400120B0  // GPIO M
-				MX6QDL_PAD_SD3_DAT4__GPIO7_IO01     0x400120B0  // GPIO N
-				MX6QDL_PAD_CSI0_VSYNC__GPIO5_IO21   0x400120B0  // GPIO O
-				MX6QDL_PAD_GPIO_18__GPIO7_IO13      0x400120B0  // GPIO P
-				MX6QDL_PAD_SD1_CMD__GPIO1_IO18      0x400120B0  // GPIO Q
-				MX6QDL_PAD_SD1_DAT0__GPIO1_IO16     0x400120B0  // GPIO R
-				MX6QDL_PAD_SD1_DAT1__GPIO1_IO17     0x400120B0  // GPIO S
-				MX6QDL_PAD_SD1_DAT2__GPIO1_IO19     0x400120B0  // GPIO T
-				MX6QDL_PAD_SD1_CLK__GPIO1_IO20      0x400120B0  // GPIO U
-				MX6QDL_PAD_CSI0_PIXCLK__GPIO5_IO18  0x400120B0  // GPIO V
-				MX6QDL_PAD_CSI0_MCLK__GPIO5_IO19    0x400120B0  // GPIO W
-				MX6QDL_PAD_KEY_COL0__GPIO4_IO06     0x400120B0  // INT_HIGHEST_PRIORITY
-			>;
-		};
-
-		pinctrl_dhcom_audmux_ext: audmux_ext_grp { 			// HW300: Audio on external clock
-			fsl,pins = <
-				MX6QDL_PAD_CSI0_DAT7__AUD3_RXD      0x130b0
-				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC      0x130b0
-				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD      0x110b0
-				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS     0x130b0
+				MX6QDL_PAD_CSI0_DATA_EN__GPIO5_IO20 0x1b0b1	// PCIe_WAKE (#148)
 			>;
 		};
 
@@ -335,44 +402,6 @@
 				MX6QDL_PAD_EIM_D26__GPIO3_IO26        0x000b1	// RGMII_WOL_INT
 			>;
 		};
-
-		pinctrl_dhcom_ipu1: ipu1_grp {
-			fsl,pins = <
-				MX6QDL_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK 0x10         // RGB_PCLK
-				MX6QDL_PAD_DI0_PIN15__IPU1_DI0_PIN15       0x10         // RGB_DATA_EN
-				MX6QDL_PAD_DI0_PIN2__IPU1_DI0_PIN02        0x10         // RGB_HSYNC
-				MX6QDL_PAD_DI0_PIN3__IPU1_DI0_PIN03        0x10         // RGB_VSYNC
-				MX6QDL_PAD_DISP0_DAT0__IPU1_DISP0_DATA00   0x10
-				MX6QDL_PAD_DISP0_DAT1__IPU1_DISP0_DATA01   0x10
-				MX6QDL_PAD_DISP0_DAT2__IPU1_DISP0_DATA02   0x10
-				MX6QDL_PAD_DISP0_DAT3__IPU1_DISP0_DATA03   0x10
-				MX6QDL_PAD_DISP0_DAT4__IPU1_DISP0_DATA04   0x10
-				MX6QDL_PAD_DISP0_DAT5__IPU1_DISP0_DATA05   0x10
-				MX6QDL_PAD_DISP0_DAT6__IPU1_DISP0_DATA06   0x10
-				MX6QDL_PAD_DISP0_DAT7__IPU1_DISP0_DATA07   0x10
-				MX6QDL_PAD_DISP0_DAT8__IPU1_DISP0_DATA08   0x10
-				MX6QDL_PAD_DISP0_DAT9__IPU1_DISP0_DATA09   0x10
-				MX6QDL_PAD_DISP0_DAT10__IPU1_DISP0_DATA10  0x10
-				MX6QDL_PAD_DISP0_DAT11__IPU1_DISP0_DATA11  0x10
-				MX6QDL_PAD_DISP0_DAT12__IPU1_DISP0_DATA12  0x10
-				MX6QDL_PAD_DISP0_DAT13__IPU1_DISP0_DATA13  0x10
-				MX6QDL_PAD_DISP0_DAT14__IPU1_DISP0_DATA14  0x10
-				MX6QDL_PAD_DISP0_DAT15__IPU1_DISP0_DATA15  0x10
-				MX6QDL_PAD_DISP0_DAT16__IPU1_DISP0_DATA16  0x10
-				MX6QDL_PAD_DISP0_DAT17__IPU1_DISP0_DATA17  0x10
-				MX6QDL_PAD_DISP0_DAT18__IPU1_DISP0_DATA18  0x10
-				MX6QDL_PAD_DISP0_DAT19__IPU1_DISP0_DATA19  0x10
-				MX6QDL_PAD_DISP0_DAT20__IPU1_DISP0_DATA20  0x10
-				MX6QDL_PAD_DISP0_DAT21__IPU1_DISP0_DATA21  0x10
-				MX6QDL_PAD_DISP0_DAT22__IPU1_DISP0_DATA22  0x10
-				MX6QDL_PAD_DISP0_DAT23__IPU1_DISP0_DATA23  0x10
-			>;
-		};
-
-		pinctrl_dhcom_pwm1: pwm1_grp {
-			fsl,pins = <
-				MX6QDL_PAD_SD1_DAT3__PWM1_OUT       0x1b0b1
-			>;
-		};
 	};
 };
+#endif
