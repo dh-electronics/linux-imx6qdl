@@ -287,18 +287,12 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6d-dhcom4B-drc01.dtb \
 	imx6d-dhcom4B-pdk2.dtb \
 	imx6d-dhcom4H-pdk2.dtb \
-	imx6dl-dhcom2B-cfi2-100.dtb \
-	imx6dl-dhcom2B-cfi2-200.dtb \
 	imx6dl-dhcom2B-pdk1.dtb \
 	imx6dl-dhcom3B-pdk2.dtb \
 	imx6dl-dhcom3B-drc01.dtb \
-	imx6dl-dhcom3B-cfi2-200.dtb \
-	imx6dl-dhcom3H-cfi2-400.dtb \
 	imx6dl-dhcom3H-pdk2.dtb \
-	imx6dl-dhcom4B-cfi2-200.dtb \
 	imx6dl-dhcom4B-drc01.dtb \
 	imx6dl-dhcom4B-pdk2.dtb \
-	imx6dl-dhcom4H-cfi2-400.dtb \
 	imx6dl-dhcom4H-pdk2.dtb \
 	imx6dl-apf6dev.dtb \
 	imx6dl-aristainetos_4.dtb \
@@ -328,18 +322,12 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6dl-udoo.dtb \
 	imx6dl-wandboard.dtb \
 	imx6dl-wandboard-revb1.dtb \
-	imx6q-dhcom2B-cfi2-100.dtb \
-	imx6q-dhcom2B-cfi2-200.dtb \
 	imx6q-dhcom2B-pdk1.dtb \
 	imx6q-dhcom3B-pdk2.dtb \
 	imx6q-dhcom3B-drc01.dtb \
-	imx6q-dhcom3B-cfi2-200.dtb \
-	imx6q-dhcom3H-cfi2-400.dtb \
 	imx6q-dhcom3H-pdk2.dtb \
-	imx6q-dhcom4B-cfi2-200.dtb \
 	imx6q-dhcom4B-drc01.dtb \
 	imx6q-dhcom4B-pdk2.dtb \
-	imx6q-dhcom4H-cfi2-400.dtb \
 	imx6q-dhcom4H-pdk2.dtb \
 	imx6q-apf6dev.dtb \
 	imx6q-arm2.dtb \
