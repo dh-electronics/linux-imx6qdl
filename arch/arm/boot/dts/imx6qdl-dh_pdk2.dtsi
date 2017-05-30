@@ -12,6 +12,7 @@
 #include <dt-bindings/pwm/pwm.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/clock/imx6qdl-clock.h>
+#include <dt-bindings/input/input.h>
 
 / {
 	bl_display {
@@ -78,23 +79,68 @@
 		};
 	};
 
-	/* TODO GPIOs */
+	/* GPIO keys */
+	/* Linux key codes ==> include/dt-bindings/input/linux-event-codes.h */
 	/*
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		volume-up {
-			label = "Volume Up";
-			gpios = <&gpio1 4 0>;
+		pdk2_ta1 {
+			label = "Esc";
+			gpios = <&gpio1 2 GPIO_ACTIVE_LOW>;			// TA1: GPIO A
 			gpio-key,wakeup;
-			linux,code = <115>; 	// KEY_VOLUMEUP
+			linux,code = <KEY_ESC>;
 		};
 
-		volume-down {
-			label = "Volume Down";
-			gpios = <&gpio1 5 0>;
+		pdk2_ta2 {
+			label = "Enter";
+			gpios = <&gpio1 4 GPIO_ACTIVE_LOW>;			// TA2: GPIO B
 			gpio-key,wakeup;
-			linux,code = <114>;	// KEY_VOLUMEDOWN
+			linux,code = <KEY_ENTER>;
+		};
+
+		pdk2_ta3 {
+			label = "left";
+			gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;			// TA3: GPIO C
+			gpio-key,wakeup;
+			linux,code = <KEY_LEFT>;
+		};
+
+		pdk2_ta4 {
+			label = "right";
+			gpios = <&gpio6 3 GPIO_ACTIVE_LOW>;			// TA4: GPIO D
+			gpio-key,wakeup;
+			linux,code = <KEY_RIGHT>;
+		};
+	};*/
+
+	/* LEDs */
+	/*
+	leds {
+		compatible = "gpio-leds";
+
+		pdk2_led5 {							// ==> /sys/class/leds/led5
+			label = "led5";
+			gpios = <&gpio4 5 GPIO_ACTIVE_HIGH>;			// GPIO E
+			default-state = "keep";					// Keep bootloader state
+		};
+
+		pdk2_led6 {							// ==> /sys/class/leds/led6
+			label = "led6";
+			gpios = <&gpio4 20 GPIO_ACTIVE_HIGH>;			// GPIO F
+			default-state = "keep";					// Keep bootloader state
+		};
+
+		pdk2_led7 {							// ==> /sys/class/leds/led7
+			label = "led7";
+			gpios = <&gpio4 7 GPIO_ACTIVE_HIGH>;			// GPIO H
+			default-state = "keep";					// Keep bootloader state
+		};
+
+		pdk2_led8 {							// ==> /sys/class/leds/led8
+			label = "led8";
+			gpios = <&gpio4 8 GPIO_ACTIVE_HIGH>;			// GPIO I
+			default-state = "keep";					// Keep bootloader state
 		};
 	};*/
 
