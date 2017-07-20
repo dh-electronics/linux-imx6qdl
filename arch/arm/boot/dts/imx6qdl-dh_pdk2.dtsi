@@ -372,7 +372,7 @@
 	pinctrl-0 = <&pinctrl_dhcom_enet_1G>;
 	phy-mode = "rgmii";
 	phy-reset-gpios = <&gpio3 29 GPIO_ACTIVE_LOW>;
-	//phy-reset-duration = 1;						// 1ms is the default value
+	//phy-reset-duration = <1>;						// 1ms is the default value
 	phy-handle = <&ethphy>;
 	//local-mac-address = [00 11 22 33 44 55];				// Is set by the bootloader
 	status = "okay";

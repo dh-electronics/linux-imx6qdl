@@ -110,7 +110,7 @@
 	pinctrl-0 = <&pinctrl_dhcom_enet_100M>;
 	phy-mode = "rmii";
 	phy-reset-gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
-	//phy-reset-duration = 1;						// 1ms is the default value
+	//phy-reset-duration = <1>;						// 1ms is the default value
 	phy-handle = <&ethphy>;
 	//local-mac-address = [00 11 22 33 44 55];				// Is set by the bootloader
 	power-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;				// Power for LAN-Transformer 7499111614A (Isn't yet supported by driver)
