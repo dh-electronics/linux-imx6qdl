@@ -3245,7 +3245,7 @@ static int fec_enet_init(struct net_device *ndev)
 static void fec_reset_phy(struct platform_device *pdev)
 {
 	int err, phy_reset;
-	int msec = 1;
+	int msec = 1, phy_post_delay = 0;
 	struct device_node *np = pdev->dev.of_node;
 
 	if (!np)
@@ -3260,6 +3260,11 @@ static void fec_reset_phy(struct platform_device *pdev)
 	if (!gpio_is_valid(phy_reset))
 		return;
 
+	of_property_read_u32(np, "phy-reset-post-delay", &phy_post_delay);
+	/* valid reset duration should be less than 1s */
+	if (phy_post_delay > 1000)
+		phy_post_delay = 1000;
+
 	err = devm_gpio_request_one(&pdev->dev, phy_reset,
 				    GPIOF_OUT_INIT_LOW, "phy-reset");
 	if (err) {
@@ -3268,6 +3273,15 @@ static void fec_reset_phy(struct platform_device *pdev)
 	}
 	msleep(msec);
 	gpio_set_value_cansleep(phy_reset, 1);
+
+	if (!phy_post_delay)
+		return;
+
+	if (phy_post_delay > 20)
+		msleep(phy_post_delay);
+	else
+		usleep_range(phy_post_delay * 1000,
+			     phy_post_delay * 1000 + 1000);
 }
 #else /* CONFIG_OF */
 static void fec_reset_phy(struct platform_device *pdev)
