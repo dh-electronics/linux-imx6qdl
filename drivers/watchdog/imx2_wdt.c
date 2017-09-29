@@ -78,6 +78,10 @@ module_param(timeout, uint, 0);
 MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
 				__MODULE_STRING(IMX2_WDT_DEFAULT_TIME) ")");
 
+static bool keepactive = false;
+module_param(keepactive, bool, 0);
+MODULE_PARM_DESC(keepactive, "Let the time elapse if watchdog is already enabled (default=false)");
+
 static const struct watchdog_info imx2_wdt_info = {
 	.identity = "imx2+ watchdog",
 	.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
@@ -279,7 +283,12 @@ static int __init imx2_wdt_probe(struct platform_device *pdev)
 
 	setup_timer(&wdev->timer, imx2_wdt_timer_ping, (unsigned long)wdog);
 
-	imx2_wdt_ping_if_active(wdog);
+	/*
+	 * Boot parameter keepactive (default=false)
+	 * Let the time elapse if watchdog is already enabled
+	 */
+	if (keepactive == false)
+		imx2_wdt_ping_if_active(wdog);
 
 	/*
 	 * Disable the watchdog power down counter at boot. Otherwise the power
@@ -302,6 +311,10 @@ static int __init imx2_wdt_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "timeout %d sec (nowayout=%d)\n",
 		 wdog->timeout, nowayout);
+
+	if (imx2_wdt_is_running(wdev))
+		dev_info(&pdev->dev, "already running and will be %s\n",
+			 keepactive ? "elapsed!" : "retriggered by kernel timer!");
 
 	return 0;
 
