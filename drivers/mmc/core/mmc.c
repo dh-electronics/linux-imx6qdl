@@ -396,6 +396,9 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 		case 7:
 			printk("5.0");
 			break;
+		case 8:
+			printk("5.1");
+			break;
 		default:
 			printk("Unknown (EXT_CSD_REV=%d)", card->ext_csd.rev );
 			break;
