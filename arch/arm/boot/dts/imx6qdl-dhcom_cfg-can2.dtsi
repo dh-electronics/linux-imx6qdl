@@ -9,9 +9,9 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-&usdhc3 {									// Mirco SD card (onModule)
-	status = "disabled";							// CAN uses pins of SDIO
-};
+&usdhc3 {									// Micro SD card (onModule)
+	status = "disabled";							// This card slot isn't useable anymore,
+};										// because DATA0 and DATA1 are muxed to CAN 2 TX and RX
 
 &can2 {										// CAN 2
 	pinctrl-names = "default";

@@ -282,7 +282,7 @@
 	status = "okay";
 };
 
-&usdhc3 {									// Mirco SD card (onModule)
+&usdhc3 {									// Micro SD card (onModule)
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_dhcom_usdhc3>;
 	cd-gpios = <&gpio7 8 GPIO_ACTIVE_LOW>;
