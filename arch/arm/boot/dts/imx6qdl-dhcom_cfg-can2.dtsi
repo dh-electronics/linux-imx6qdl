@@ -9,6 +9,15 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
+&uart1 {									// UART 1
+	/delete-property/fsl,uart-has-rtscts;					// RTS/CTS pins are used by CAN 2
+	/delete-property/dtr-gpios;						// Remove useless DTR/DRS/DCD/RNG GPIOs
+	/delete-property/dsr-gpios;
+	/delete-property/dcd-gpios;
+	/delete-property/rng-gpios;
+
+};
+
 &usdhc3 {									// Micro SD card (onModule)
 	status = "disabled";							// This card slot isn't useable anymore,
 };										// because DATA0 and DATA1 are muxed to CAN 2 TX and RX
