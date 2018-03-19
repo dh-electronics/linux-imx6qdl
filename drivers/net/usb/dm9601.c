@@ -57,6 +57,7 @@
 #define DM_TX_OVERHEAD	2	/* 2 byte header */
 #define DM_RX_OVERHEAD	7	/* 3 byte header + 4 byte crc tail */
 #define DM_TIMEOUT	1000
+#define DM_EEPROM_MAGIC	0x9621
 
 static int dm_read(struct usbnet *dev, u8 reg, u16 length, void *data)
 {
@@ -191,7 +192,12 @@ static int dm_read_eeprom_word(struct usbnet *dev, u8 offset, void *value)
 	return dm_read_shared_word(dev, 0, offset, value);
 }
 
-
+#ifdef CONFIG_USB_NET_DM9601_EEPROM_WRITE
+static void dm_write_eeprom_word(struct usbnet *dev, u8 offset, __le16 data)
+{
+	dm_write_shared_word(dev, 0, offset, data);
+}
+#endif /* CONFIG_USB_NET_DM9601_EEPROM_WRITE */
 
 static int dm9601_get_eeprom_len(struct net_device *dev)
 {
@@ -216,6 +222,46 @@ static int dm9601_get_eeprom(struct net_device *net,
 	}
 	return 0;
 }
+
+#ifdef CONFIG_USB_NET_DM9601_EEPROM_WRITE
+static int dm9601_set_eeprom(struct net_device *net,
+			     struct ethtool_eeprom *eeprom, u8 *data)
+{
+	struct usbnet *dev = netdev_priv(net);
+	int offset = eeprom->offset;
+	int len = eeprom->len;
+	int done;
+
+	if (eeprom->magic != DM_EEPROM_MAGIC) {
+		netdev_dbg(dev->net,
+			   "EEPROM: magic value mismatch, magic = 0x%x",
+			   eeprom->magic);
+		return -EINVAL;
+	}
+
+	while (len > 0) {
+		if (len & 1 || offset & 1) {
+			int which = offset & 1;
+			u8 tmp[2];
+
+			dm_read_eeprom_word(dev, offset / 2, tmp);
+			tmp[which] = *data;
+			dm_write_eeprom_word(dev, offset / 2,
+					     tmp[0] | tmp[1] << 8);
+			mdelay(10);
+			done = 1;
+		} else {
+			dm_write_eeprom_word(dev, offset / 2,
+					     data[0] | data[1] << 8);
+			done = 2;
+		}
+		data += done;
+		offset += done;
+		len -= done;
+	}
+	return 0;
+}
+#endif /* CONFIG_USB_NET_DM9601_EEPROM_WRITE */
 
 static int dm9601_mdio_read(struct net_device *netdev, int phy_id, int loc)
 {
@@ -287,6 +333,9 @@ static const struct ethtool_ops dm9601_ethtool_ops = {
 	.set_msglevel	= usbnet_set_msglevel,
 	.get_eeprom_len	= dm9601_get_eeprom_len,
 	.get_eeprom	= dm9601_get_eeprom,
+#ifdef CONFIG_USB_NET_DM9601_EEPROM_WRITE
+	.set_eeprom	= dm9601_set_eeprom,
+#endif
 	.nway_reset	= usbnet_nway_reset,
 	.get_link_ksettings	= usbnet_get_link_ksettings_mii,
 	.set_link_ksettings	= usbnet_set_link_ksettings_mii,
