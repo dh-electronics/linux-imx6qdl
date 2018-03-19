@@ -317,6 +317,17 @@ config USB_NET_DM9601
 	  This option adds support for Davicom DM9601/DM9620/DM9621A
 	  based USB 10/100 Ethernet adapters.
 
+config USB_NET_DM9601_EEPROM_WRITE
+	bool "Enable DM96xx EEPROM writing support"
+	depends on USB_NET_DM9601
+	default n
+	help
+	  Say Y if you want to write data onto the EEPROM connected to the
+	  Davicom DM96xx ethernet devices by ethtool. Writing the ethernet MAC
+	  onto the EEPROM is a common use of this support.
+
+	  If unsure, say N.
+
 config USB_NET_SR9700
 	tristate "CoreChip-sz SR9700 based USB 1.1 10/100 ethernet devices"
 	depends on USB_USBNET
