@@ -360,6 +360,49 @@ static void mmc_manage_gp_partitions(struct mmc_card *card, u8 *ext_csd)
 #define MMC_MIN_PART_SWITCH_TIME	300
 
 /*
+ * Print info from extended CSD.
+ */
+static void mmc_decode_ext_csd_print_info(struct mmc_card *card)
+{
+	printk(KERN_INFO "%s: eMMC version ", mmc_hostname(card->host) );
+	switch( card->ext_csd.rev ) {
+		case 0:
+			printk(KERN_CONT "4.0");
+			break;
+		case 1:
+			printk(KERN_CONT "4.1");
+			break;
+		case 2:
+			printk(KERN_CONT "4.2");
+			break;
+		case 3:
+			printk(KERN_CONT "4.3");
+			break;
+		case 4:
+			printk(KERN_CONT "4.4 (obsolete)");
+			break;
+		case 5:
+			printk(KERN_CONT "4.41");
+			break;
+		case 6:
+			printk(KERN_CONT "4.5");
+			break;
+		case 7:
+			printk(KERN_CONT "5.0");
+			break;
+		case 8:
+			printk(KERN_CONT "5.1");
+			break;
+		default:
+			printk(KERN_CONT "Unknown (EXT_CSD_REV=%d)",
+			       card->ext_csd.rev );
+			break;
+	}
+	printk(KERN_CONT " (ManuID 0x%X, OEM 0x%X)\n",
+	       card->cid.manfid, card->cid.oemid );
+}
+
+/*
  * Decode extended CSD.
  */
 static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
@@ -392,6 +435,8 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	 * are authorized, see JEDEC JESD84-B50 section B.8.
 	 */
 	card->ext_csd.rev = ext_csd[EXT_CSD_REV];
+
+	mmc_decode_ext_csd_print_info(card);
 
 	/* fixup device after ext_csd revision field is updated */
 	mmc_fixup_device(card, mmc_ext_csd_fixups);
