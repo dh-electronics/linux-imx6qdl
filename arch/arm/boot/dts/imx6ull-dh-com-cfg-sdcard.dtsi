@@ -6,11 +6,16 @@
 /*
  * Special configuration: sdcard
  *
- * Enabled:  SD card or microSD card
+ * Enabled:  uSD card (on module) or
+ *           uSD/SD/MMC card interface (external) depends on hardware variant
  * Disabled: WLAN/BT
  */
 
 / {
+	aliases {
+		mmc1 = &usdhc1; /* Card interface should be mmc1 */
+	};
+
 	reg_sd1_vmmc: regulator-sd1-vmmc {
 		compatible = "regulator-fixed";
 		regulator-name = "VSD_3V3";
@@ -19,7 +24,7 @@
 	};
 };
 
-&usdhc1 {
+&usdhc1 { /* uSD card (on module) or uSD/SD/MMC card interface (external) */
 	pinctrl-names = "default", "state_100mhz", "state_200mhz";
 	pinctrl-0 = <&pinctrl_usdhc1>;
 	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
