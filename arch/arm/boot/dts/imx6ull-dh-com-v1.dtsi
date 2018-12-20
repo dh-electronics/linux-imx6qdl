@@ -10,6 +10,9 @@
 	aliases {
 		rtc0 = &rtc_i2c;
 		rtc1 = &snvs_rtc;
+		/delete-property/ mmc0; /* Avoid double definitions */
+		/delete-property/ mmc1;
+		/delete-property/ mmc2;
 	};
 
 	chosen {
