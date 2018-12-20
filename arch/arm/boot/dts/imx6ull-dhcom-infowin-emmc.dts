@@ -1,0 +1,169 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2018 DH electronics GmbH
+ */
+
+/dts-v1/;
+
+#include "imx6ull-dhcom.dtsi"
+
+/ {
+	model = "DHCOM i.MX6ULL on InfoWin (eMMC)";
+	compatible = "dh,imx6ull-dhcom-infowin-emmc", "fsl,imx6ull";
+};
+
+&weim {
+	/*
+	 * Configuring the WEIM interface to send display data to
+	 * Sitronix ST7586S LCD controller via 8080 parallel interface (8bit).
+	 * For configuring WEIM for other projects, please check if a
+	 * multiplexed mode is needed. Therefore you need to activate it
+	 * and check the correct assignment of the data lines.
+	 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_weim &pinctrl_weim_cs2 &pinctrl_weim_cs3>;
+	#address-cells = <2>;
+	#size-cells = <1>;
+
+	/* It is necessary to setup 4 x 32 MB otherwise setting gpr fails */
+	ranges = <0 0  0x50000000  0x02000000>,	/* Chip select 0 == DHCOM CS A */
+		 <1 0  0x52000000  0x02000000>,	/* Chip select 1 == DHCOM CS B */
+		 <2 0  0x54000000  0x02000000>,	/* Chip select 2 == DHCOM CS C */
+		 <3 0  0x56000000  0x02000000>;	/* Chip select 3 == DHCOM CS D */
+	fsl,weim-cs-gpr = <&gpr>;
+	status = "okay";
+
+	/*
+	 * Even if you do not need all uiomaps,
+	 * you must not disable the unused.
+	 */
+	uiomap_cs0@0,0 {
+		compatible = "generic-uio";
+		reg = <0 0x00000000 0x02000000>;
+		reg-names = "uio_cs0";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		fsl,weim-cs-timing = <0x00610089 0x00001002 0x0F011061
+				      0x00000000 0x0F068A31 0x00000000>;
+		status = "okay";
+	};
+	uiomap_cs1@0,1 {
+		compatible = "generic-uio";
+		reg = <1 0x00000000 0x02000000>;
+		reg-names = "uio_cs1";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		fsl,weim-cs-timing = <0x00610089 0x00001002 0x0F011061
+				      0x00000000 0x0F068A31 0x00000000>;
+		status = "okay";
+	};
+	/* Used for WEIM -> 8080 parallel interface */
+	uiomap_cs2@0,2 {
+		compatible = "generic-uio";
+		reg = <2 0x00000000 0x02000000>;
+		reg-names = "uio_cs2";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		fsl,weim-cs-timing = <0x00610081 0x00001002 0x1F011061
+				      0x00000000 0x15068492 0x00000000>;
+		status = "okay";
+	};
+
+	uiomap_cs3@0,3 {
+		compatible = "generic-uio";
+		reg = <3 0x00000000 0x02000000>;
+		reg-names = "uio_cs3";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		fsl,weim-cs-timing = <0x00610089 0x00001002 0x0F011061
+				      0x00000000 0x0F068A31 0x00000000>;
+		status = "okay";
+	};
+};
+
+#ifndef CFG_BOOTFLASH
+&ecspi1 { /* DHCOM SPI1 */
+	spidev@0 { /* For now rohm,dh2228fv is as dummy device to avoid kernel backtrace */
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <54000000>;
+		spi-cpha; /* Shifted clock phase (CPHA) mode */
+		spi-cpol; /* Inverse clock polarity (CPOL) mode */
+	};
+};
+#endif
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_pdk2>;
+
+	pinctrl_hog_pdk2: hog-pdk2-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> BL_RD */
+			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J */
+			/* CSI_PIXCLK is used for parallel interface EP       GPIO K */
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L */
+			/* CSI_VSYNC is used for parallel interface RW        GPIO M */
+#ifndef CFG_BOOTFLASH
+			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N */
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O */
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P */
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q */
+#endif
+			MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x400120b0 /* GPIO R */
+			MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x400120b0 /* GPIO S */
+			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x400120b0 /* GPIO T */
+			/* CSI_DATA00 is used for parallel interface A0       GPIO U */
+			/* There isn't a pin defined                          GPIO V */
+			/* There isn't a pin defined                          GPIO W */
+		>;
+	};
+
+	pinctrl_weim: weim-grp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_PIXCLK__EIM_OE		0xb0b1 /* Read Enable / EP */
+			MX6UL_PAD_CSI_VSYNC__EIM_RW		0xb0b1 /* Write Enable / RW */
+			/* Address line */
+			MX6UL_PAD_CSI_DATA00__EIM_AD00		0xb0a6 /* A0 */
+			/* Data lines */
+			MX6UL_PAD_LCD_DATA15__EIM_DATA07	0xb0a6 /* D7 */
+			MX6UL_PAD_LCD_DATA14__EIM_DATA06	0xb0a6 /* D6 */
+			MX6UL_PAD_LCD_DATA13__EIM_DATA05	0xb0a6 /* D5 */
+			MX6UL_PAD_LCD_DATA12__EIM_DATA04	0xb0a6 /* D4 */
+			MX6UL_PAD_LCD_DATA11__EIM_DATA03	0xb0a6 /* D3 */
+			MX6UL_PAD_LCD_DATA10__EIM_DATA02	0xb0a6 /* D2 */
+			MX6UL_PAD_LCD_DATA09__EIM_DATA01	0xb0a6 /* D1 */
+			MX6UL_PAD_LCD_DATA08__EIM_DATA00	0xb0a6 /* D0 */
+		>;
+	};
+
+	pinctrl_weim_cs2: weim-cs2-grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_CLK__EIM_CS2_B		0xb0b1 /* CS */
+		>;
+	};
+
+	pinctrl_weim_cs3: weim-cs3-grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_ENABLE__EIM_CS3_B		0xb0b1
+		>;
+	};
+};
+
+&iomuxc_snvs {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_snvs_hog_com &pinctrl_snvs_hog_pdk2>;
+
+	pinctrl_snvs_hog_pdk2: snvs-hog-pdk2-grp {
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A */
+			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B */
+			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C */
+			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D -> D_#Reset */
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x120b0    /* GPIO E */
+			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x120b0    /* GPIO G -> BL_WH */
+			/* TAMPER9__GPIO5_IO09 is used for PMIC               GPIO H */
+		>;
+	};
+};
