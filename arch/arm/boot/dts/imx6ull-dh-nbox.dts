@@ -7,6 +7,7 @@
 
 #include "imx6ull-dh-com-v1.dtsi"
 /* Special configurations */
+#include "imx6ull-dh-com-cfg-emmc.dtsi"
 #include "imx6ull-dh-com-cfg-sdcard.dtsi"
 
 / {
