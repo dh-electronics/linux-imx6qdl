@@ -6,6 +6,8 @@
 /dts-v1/;
 
 #include "imx6ull-dh-com-v1.dtsi"
+#include "imx6ull-dh-com-cfg-emmc.dtsi"
+#include "imx6ull-dh-com-cfg-sdcard.dtsi"
 
 / {
 	model = "DHCOM i.MX6ULL on InfoWin";
