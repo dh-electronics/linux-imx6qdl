@@ -8,7 +8,9 @@
  *
  * Enabled:  uSD card (on module) or
  *           uSD/SD/MMC card interface (external) depends on hardware variant
- * Disabled: WLAN/BT
+ *           GPIO H and GPIO I will be available
+ *           DHCOM UART2 will be available
+ * Disabled: WiFi and BT
  */
 
 / {
@@ -24,7 +26,14 @@
 	};
 };
 
+
+/delete-node/ &brcmf; /* Delete wifi node of usdhc1 */
 &usdhc1 { /* uSD card (on module) or uSD/SD/MMC card interface (external) */
+	/delete-property/ non-removable;
+	/delete-property/ mmc-pwrseq;
+	/delete-property/ #address-cells;
+	/delete-property/ #size-cells;
+
 	pinctrl-names = "default", "state_100mhz", "state_200mhz";
 	pinctrl-0 = <&pinctrl_usdhc1>;
 	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;

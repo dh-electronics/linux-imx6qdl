@@ -12,8 +12,6 @@
 
 #define CFG_BOOTFLASH
 
-/delete-node/ &reg_spi_bus;
-
 / {
 	/*
 	 * Pin SPI_BOOT_FLASH_EN (1.9) = LOW means

@@ -151,7 +151,7 @@
 
 	pinctrl_hog_pdk2: hog-pdk2-grp {
 		fsl,pins = <
-			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I */
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> BT_REG_ON */
 			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J */
 			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x400120b0 /* GPIO K */
 			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L */
@@ -184,7 +184,7 @@
 
 &iomuxc_snvs {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_snvs_hog_com &pinctrl_snvs_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_snvs_hog_pdk2>;
 
 	pinctrl_snvs_hog_pdk2: snvs-hog-pdk2-grp {
 		fsl,pins = <
@@ -195,7 +195,7 @@
 			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x120b0    /* GPIO E -> Polytouch INT */
 			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F */
 			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x120b0    /* GPIO G -> Backlight enable */
-			/* TAMPER9__GPIO5_IO09 is used by PMIC                GPIO H */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x1b0b0    /* GPIO H -> WL_REG_ON */
 		>;
 	};
 };
