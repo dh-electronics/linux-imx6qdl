@@ -40,7 +40,22 @@
 		spi-max-frequency = <50000000>;
 		reg = <0>;
 		m25p,fast-read;
-		label = "spi-bootflash"; /* Identifier for the update kernel */
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spi-bootflash"; /* Identifier for the update kernel */
+				reg = <0x0 0x120000>;
+			};
+
+			partition@120000 { /* 917.504 byte for the user available */
+				label = "spi-userflash";
+				reg = <0x120000 0xe0000>;
+			};
+		};
 	};
 };
 
