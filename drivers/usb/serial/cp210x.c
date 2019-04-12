@@ -31,6 +31,8 @@
  */
 static int cp210x_open(struct tty_struct *tty, struct usb_serial_port *);
 static void cp210x_close(struct usb_serial_port *);
+static int cp210x_ioctl(struct tty_struct *tty, unsigned int cmd,
+	unsigned long arg);
 static void cp210x_get_termios(struct tty_struct *, struct usb_serial_port *);
 static void cp210x_get_termios_port(struct usb_serial_port *port,
 	tcflag_t *cflagp, unsigned int *baudp);
@@ -265,6 +267,7 @@ static struct usb_serial_driver cp210x_device = {
 	.bulk_out_size		= 256,
 	.open			= cp210x_open,
 	.close			= cp210x_close,
+	.ioctl			= cp210x_ioctl,
 	.break_ctl		= cp210x_break_ctl,
 	.set_termios		= cp210x_set_termios,
 	.tx_empty		= cp210x_tx_empty,
@@ -377,6 +380,10 @@ static struct usb_serial_driver * const serial_drivers[] = {
 #define CP210X_PARTNUM_CP2102N_QFN24	0x21
 #define CP210X_PARTNUM_CP2102N_QFN20	0x22
 #define CP210X_PARTNUM_UNKNOWN	0xFF
+
+/* IOCTLs */
+#define IOCTL_GPIOGET		0x8000
+#define IOCTL_GPIOSET		0x8001
 
 /* CP210X_GET_COMM_STATUS returns these 0x13 bytes */
 struct cp210x_comm_status {
@@ -829,6 +836,113 @@ static void cp210x_close(struct usb_serial_port *port)
 	cp210x_write_u16_reg(port, CP210X_PURGE, PURGE_ALL);
 
 	cp210x_write_u16_reg(port, CP210X_IFC_ENABLE, UART_DISABLE);
+}
+
+static int cp210x_ioctl(struct tty_struct *tty,
+	unsigned int cmd, unsigned long arg)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_serial *serial = port->serial;
+	struct cp210x_serial_private *priv = usb_get_serial_data(serial);
+	int result = 0;
+	unsigned long latch_buf = 0;
+
+	switch (cmd) {
+
+	case IOCTL_GPIOGET:
+		if ((priv->partnum == CP210X_PARTNUM_CP2103) ||
+			(priv->partnum == CP210X_PARTNUM_CP2104)) {
+			result = usb_control_msg(port->serial->dev,
+					usb_rcvctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_DEVICE_TO_HOST,
+					CP210X_READ_LATCH,
+					0,
+					(unsigned int*)&latch_buf, 1, USB_CTRL_GET_TIMEOUT);
+			if (result != 0)
+				return result;
+			if (copy_to_user((unsigned int*)arg, &latch_buf, 1))
+				return -EFAULT;
+			return 0;
+		}
+		else if (priv->partnum == CP210X_PARTNUM_CP2105) {
+			result = usb_control_msg(port->serial->dev,
+					usb_rcvctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_DEVICE_TO_HOST,
+					CP210X_READ_LATCH,
+					0,
+					(unsigned int*)&latch_buf, 1, USB_CTRL_GET_TIMEOUT);
+			if (result != 0)
+				return result;
+			if (copy_to_user((unsigned int*)arg, &latch_buf, 1))
+				return -EFAULT;
+			return 0;
+		}
+		else if (priv->partnum == CP210X_PARTNUM_CP2108) {
+			result = usb_control_msg(port->serial->dev,
+					usb_rcvctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_DEVICE_TO_HOST,
+					CP210X_READ_LATCH,
+					0,
+					(unsigned int*)&latch_buf, 2, USB_CTRL_GET_TIMEOUT);
+			if (result != 0)
+				return result;
+			if (copy_to_user((unsigned int*)arg, &latch_buf, 2))
+				return -EFAULT;
+			return 0;
+		}
+		else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	case IOCTL_GPIOSET:
+		if ((priv->partnum == CP210X_PARTNUM_CP2103) ||
+			(priv->partnum == CP210X_PARTNUM_CP2104)) {
+			if (copy_from_user(&latch_buf, (unsigned int*)arg, 2))
+				return -EFAULT;
+			return usb_control_msg(port->serial->dev,
+					usb_sndctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_HOST_TO_DEVICE,
+					CP210X_WRITE_LATCH,
+					latch_buf,
+					NULL, 0, USB_CTRL_SET_TIMEOUT);
+		}
+		else if (priv->partnum == CP210X_PARTNUM_CP2105) {
+			if (copy_from_user(&latch_buf, (unsigned int*)arg, 2))
+				return -EFAULT;
+			return usb_control_msg(port->serial->dev,
+					usb_sndctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_HOST_TO_DEVICE,
+					CP210X_WRITE_LATCH,
+					0,
+					(unsigned int*)&latch_buf, 2, USB_CTRL_SET_TIMEOUT);
+		}
+		else if (priv->partnum == CP210X_PARTNUM_CP2108) {
+			if (copy_from_user(&latch_buf, (unsigned int*)arg, 4))
+				return -EFAULT;
+			return usb_control_msg(port->serial->dev,
+					usb_sndctrlpipe(port->serial->dev, 0),
+					CP210X_VENDOR_SPECIFIC,
+					REQTYPE_HOST_TO_DEVICE,
+					CP210X_WRITE_LATCH,
+					0,
+					(unsigned int*)&latch_buf, 4, USB_CTRL_SET_TIMEOUT);
+		}
+		else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return -ENOIOCTLCMD;
 }
 
 /*
