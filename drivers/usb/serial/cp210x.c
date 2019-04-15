@@ -440,6 +440,11 @@ static struct usb_serial_driver * const serial_drivers[] = {
 #define IOCTL_GPIOGET		0x8000
 #define IOCTL_GPIOSET		0x8001
 #define IOCTL_AUTO_GPIO_CTL	0x8002
+#define IOCTL_EVENTMASKGET	0x8003
+#define IOCTL_EVENTMASKSET	0x8004
+#define IOCTL_EVENTSTATEGET	0x8005
+#define IOCTL_COMMSTATUSGET	0x8006
+#define IOCTL_PURGE		0x8007
 
 /* CP210X_GET_COMM_STATUS returns these 0x13 bytes */
 struct cp210x_comm_status {
@@ -1066,6 +1071,77 @@ static int cp210x_ioctl(struct tty_struct *tty,
 				dev_dbg(dev, "ONLY uarts 0,1 and 2 are set - uart 3 is left in old state!\n");
 				dev_dbg(dev, "Reconnect power-supply to activate new configuration!\n");
 			}
+		} else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	case IOCTL_EVENTMASKGET:
+		if (priv->partnum == CP210X_PARTNUM_CP2104) {
+			result = cp210x_read_u16_reg(port, CP210X_GET_EVENTMASK, (u16*)&latch_buf);
+			dev_dbg(dev, "%s (CP210X_GET_EVENTMASK) - get_wait_mask = %04X"
+				, __func__, (u16)latch_buf);
+			if (result != 0)
+				return result;
+			if (copy_to_user((u16*)arg, &latch_buf, 2))
+				return -EFAULT;
+			return 0;
+		} else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	case IOCTL_EVENTMASKSET:
+		if (priv->partnum == CP210X_PARTNUM_CP2104) {
+			if (copy_from_user(&latch_buf, (u16*)arg, 2))
+				return -EFAULT;
+			result = cp210x_write_u16_reg(port, CP210X_SET_EVENTMASK, (u16)latch_buf);
+			dev_dbg(dev, "%s (CP210X_SET_EVENTMASK) - set_wait_mask = %04X"
+				, __func__, (u16)latch_buf);
+			return result;
+		} else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	case IOCTL_EVENTSTATEGET:
+		if (priv->partnum == CP210X_PARTNUM_CP2104) {
+			result = cp210x_read_u16_reg(port, CP210X_GET_EVENTSTATE, (u16*)&latch_buf);
+			dev_dbg(dev, "%s (CP210X_GET_EVENTSTATE) - event_state_get = %04X"
+				, __func__, (u16)latch_buf);
+			if (result != 0)
+				return result;
+			if (copy_to_user((u16*)arg, &latch_buf, 2))
+				return -EFAULT;
+			return 0;
+		} else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	case IOCTL_COMMSTATUSGET:
+		if (priv->partnum == CP210X_PARTNUM_CP2104) {
+			u8 latch_buf_array[0x13];
+			result = cp210x_read_reg_block(port, CP210X_GET_COMM_STATUS, latch_buf_array, sizeof(latch_buf_array));
+			dev_dbg(dev, "%s (P210X_GET_COMM_STATUS)", __func__);
+			if (result != 0)
+				return result;
+			if (copy_to_user((u8*)arg, latch_buf_array, sizeof(latch_buf_array)))
+				return -EFAULT;
+			return 0;
+		} else {
+			return -ENOTSUPP;
+		}
+		break;
+
+	case IOCTL_PURGE:
+		if (priv->partnum == CP210X_PARTNUM_CP2104) {
+			if (copy_from_user(&latch_buf, (u16*)arg, 2))
+				return -EFAULT;
+			result = cp210x_write_u16_reg(port, CP210X_PURGE, (u16)latch_buf);
+			dev_dbg(dev, "%s (CP210X_PURGE) - purge_mask = %01X"
+				, __func__, (u16)latch_buf);
+			return result;
 		} else {
 			return -ENOTSUPP;
 		}
