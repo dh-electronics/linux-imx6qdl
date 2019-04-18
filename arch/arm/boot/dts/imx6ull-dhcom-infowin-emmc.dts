@@ -25,6 +25,17 @@
 };
 #endif
 
+&i2c1 { /* DHCOM I2C2 */
+	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
+		compatible = "atmel,24c04";
+		reg = <0x56>;
+		pagesize = <16>;
+	};
+};
+
+&i2c2 { /* DHCOM I2C1 */
+};
+
 &weim {
 	/*
 	 * Configuring the WEIM interface to send display data to
