@@ -13,6 +13,18 @@
 	compatible = "dh,imx6ull-dhcom-infowin-emmc", "fsl,imx6ull";
 };
 
+#ifndef CFG_BOOTFLASH
+&ecspi1 { /* DHCOM SPI1 */
+	spidev@0 { /* For now rohm,dh2228fv is as dummy device to avoid kernel backtrace */
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <54000000>;
+		spi-cpha; /* Shifted clock phase (CPHA) mode */
+		spi-cpol; /* Inverse clock polarity (CPOL) mode */
+	};
+};
+#endif
+
 &weim {
 	/*
 	 * Configuring the WEIM interface to send display data to
@@ -81,18 +93,6 @@
 		status = "okay";
 	};
 };
-
-#ifndef CFG_BOOTFLASH
-&ecspi1 { /* DHCOM SPI1 */
-	spidev@0 { /* For now rohm,dh2228fv is as dummy device to avoid kernel backtrace */
-		compatible = "rohm,dh2228fv";
-		reg = <0>;
-		spi-max-frequency = <54000000>;
-		spi-cpha; /* Shifted clock phase (CPHA) mode */
-		spi-cpol; /* Inverse clock polarity (CPOL) mode */
-	};
-};
-#endif
 
 &iomuxc {
 	pinctrl-names = "default";
