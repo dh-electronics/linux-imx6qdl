@@ -29,9 +29,9 @@
 #endif
 
 &i2c1 { /* DHCOM I2C2 */
-	eeprom@50 { /* Atmel AT24HC04B */
+	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
 		compatible = "atmel,24c04";
-		reg = <0x50>;
+		reg = <0x56>;
 		pagesize = <16>;
 	};
 };
