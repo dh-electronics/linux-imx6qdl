@@ -41,9 +41,9 @@
 
 &iomuxc {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_hog_drc02>;
 
-	pinctrl_hog_pdk2: hog-pdk2-grp {
+	pinctrl_hog_drc02: hog-drc02-grp {
 		fsl,pins = <
 			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> Prepared for UART1 RTS */
 			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J -> Code_HW_2 */
@@ -69,18 +69,18 @@
 
 &iomuxc_snvs {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_snvs_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_snvs_hog_drc02>;
 
-	pinctrl_snvs_hog_pdk2: snvs-hog-pdk2-grp {
+	pinctrl_snvs_hog_drc02: snvs-hog-drc02-grp {
 		fsl,pins = <
 			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A -> Display connector */
 			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B -> Display connector */
 			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C -> Display connector */
 			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D -> OUT 2*/
-			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x120b0    /* GPIO E -> Display connector */
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x400120b0 /* GPIO E -> Display connector */
 			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F -> OUT 1 */
-			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x120b0    /* GPIO G -> IN 1 */
-			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x1b0b0    /* GPIO H -> Reset USB hub */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x400120b0 /* GPIO G -> IN 1 */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x400120b0 /* GPIO H -> Reset USB hub */
 		>;
 	};
 };
