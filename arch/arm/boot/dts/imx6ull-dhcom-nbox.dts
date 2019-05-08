@@ -75,9 +75,9 @@
 
 &iomuxc {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_hog_nbox>;
 
-	pinctrl_hog_pdk2: hog-pdk2-grp {
+	pinctrl_hog_nbox: hog-nbox-grp {
 		fsl,pins = <
 			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I */
 			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J */
@@ -119,18 +119,18 @@
 
 &iomuxc_snvs {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_snvs_hog_com &pinctrl_snvs_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_snvs_hog_nbox>;
 
-	pinctrl_snvs_hog_pdk2: snvs-hog-pdk2-grp {
+	pinctrl_snvs_hog_nbox: snvs-hog-nbox-grp {
 		fsl,pins = <
 			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A */
 			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B */
 			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C */
 			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D */
-			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x120b0    /* GPIO E */
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x400120b0 /* GPIO E */
 			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F */
-			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x120b0    /* GPIO G */
-			/* TAMPER9__GPIO5_IO09 is used by PMIC                GPIO H */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x400120b0 /* GPIO G */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x400120b0 /* GPIO H */
 		>;
 	};
 };
