@@ -107,18 +107,18 @@
 
 &iomuxc {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_hog_infowin>;
 
-	pinctrl_hog_pdk2: hog-pdk2-grp {
+	pinctrl_hog_infowin: hog-infowin-grp {
 		fsl,pins = <
-			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> BL_RD */
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I */
 			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J */
-			/* CSI_PIXCLK is used for parallel interface EP       GPIO K */
+			/* CSI_PIXCLK is used for parallel interface OE       GPIO K */
 			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L */
 			/* CSI_VSYNC is used for parallel interface RW        GPIO M */
 #ifndef CFG_BOOTFLASH
 			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N */
-			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O */
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O -> LC_#RESET */
 			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P */
 			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q */
 #endif
@@ -133,8 +133,8 @@
 
 	pinctrl_weim: weim-grp {
 		fsl,pins = <
-			MX6UL_PAD_CSI_PIXCLK__EIM_OE		0xb0b1 /* Read Enable / EP */
-			MX6UL_PAD_CSI_VSYNC__EIM_RW		0xb0b1 /* Write Enable / RW */
+			MX6UL_PAD_CSI_PIXCLK__EIM_OE		0xb0b1 /* OE */
+			MX6UL_PAD_CSI_VSYNC__EIM_RW		0xb0b1 /* RW */
 			/* Address line */
 			MX6UL_PAD_CSI_DATA00__EIM_AD00		0xb0a6 /* A0 */
 			/* Data lines */
@@ -164,18 +164,18 @@
 
 &iomuxc_snvs {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_snvs_hog_com &pinctrl_snvs_hog_pdk2>;
+	pinctrl-0 = <&pinctrl_snvs_hog_infowin>;
 
-	pinctrl_snvs_hog_pdk2: snvs-hog-pdk2-grp {
+	pinctrl_snvs_hog_infowin: snvs-hog-infowin-grp {
 		fsl,pins = <
-			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A */
+			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A -> LC_RED */
 			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B */
-			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C */
-			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D -> D_#Reset */
-			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x120b0    /* GPIO E */
+			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C -> LC_WHITE */
+			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D */
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x400120b0 /* GPIO E */
 			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F */
-			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x120b0    /* GPIO G -> BL_WH */
-			/* TAMPER9__GPIO5_IO09 is used for PMIC               GPIO H */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x400120b0 /* GPIO G */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x400120b0 /* GPIO H */
 		>;
 	};
 };
