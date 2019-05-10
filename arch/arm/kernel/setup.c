@@ -64,7 +64,26 @@
 #include <asm/virt.h>
 
 #include "atags.h"
+#include <linux/moduleparam.h>
 
+
+static char SN_number[16] = "";
+static const struct kparam_string __param_string_SN = { sizeof(SN_number), SN_number };
+__module_param_call("", SN, &param_ops_string,
+		    .str = &__param_string_SN, 0444, -1, 0);\
+__MODULE_PARM_TYPE(SN, "string");
+
+static char dhcom[16] = "";
+static const struct kparam_string __param_string_dhcom = { sizeof(dhcom), dhcom };
+__module_param_call("", dhcom, &param_ops_string,
+		    .str = &__param_string_dhcom, 0444, -1, 0);\
+__MODULE_PARM_TYPE(dhcom, "string");
+
+static char dhsw[16] = "";
+static const struct kparam_string __param_string_dhsw = { sizeof(dhsw), dhsw };
+__module_param_call("", dhsw, &param_ops_string,
+		    .str = &__param_string_dhsw, 0444, -1, 0);\
+__MODULE_PARM_TYPE(dhsw, "string");
 
 #if defined(CONFIG_FPE_NWFPE) || defined(CONFIG_FPE_FASTFPE)
 char fpe_type[8];
@@ -940,6 +959,10 @@ static int __init init_machine_late(void)
 {
 	struct device_node *root;
 	int ret;
+	long long sn;
+	const char dhcom_id[] = "dhcom";
+	char *pos;
+	unsigned int rev;
 
 	if (machine_desc->init_late)
 		machine_desc->init_late();
@@ -952,10 +975,26 @@ static int __init init_machine_late(void)
 			system_serial = NULL;
 	}
 
+	if (!system_serial && (strlen(SN_number) != 0)) {
+		if (kstrtoll(SN_number, 10, &sn) == 0)
+			system_serial = kasprintf(GFP_KERNEL, "%016lld", sn);
+		else
+			system_serial = kasprintf(GFP_KERNEL, "%s", SN_number);
+	}
+
 	if (!system_serial)
 		system_serial = kasprintf(GFP_KERNEL, "%08x%08x",
 					  system_serial_high,
 					  system_serial_low);
+
+	if (strlen(dhcom) != 0) {
+		pos = strstr(dhcom, dhcom_id);
+		if ( pos != NULL ) {
+			pos = pos + strlen(dhcom_id);
+			if (kstrtouint(pos, 10, &rev) == 0)
+				system_rev = ((rev/10) * 0x1000) + ((rev % 10) * 0x100);
+		}
+	}
 
 	return 0;
 }
