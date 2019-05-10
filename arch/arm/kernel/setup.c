@@ -61,7 +61,32 @@
 #include <asm/virt.h>
 
 #include "atags.h"
+#include <linux/moduleparam.h>
 
+
+static char SN_number[16] = "";
+static const struct kparam_string __param_string_SN = { sizeof(SN_number), SN_number };
+__module_param_call("", SN, &param_ops_string,
+		    .str = &__param_string_SN, 0444, -1, 0);\
+__MODULE_PARM_TYPE(SN, "string");
+
+static char PSN_number[16] = "";
+static const struct kparam_string __param_string_PSN = { sizeof(PSN_number), PSN_number };
+__module_param_call("", PSN, &param_ops_string,
+		    .str = &__param_string_PSN, 0444, -1, 0);\
+__MODULE_PARM_TYPE(PSN, "string");
+
+static char dhcom[16] = "";
+static const struct kparam_string __param_string_dhcom = { sizeof(dhcom), dhcom };
+__module_param_call("", dhcom, &param_ops_string,
+		    .str = &__param_string_dhcom, 0444, -1, 0);\
+__MODULE_PARM_TYPE(dhcom, "string");
+
+static char dhsw[16] = "";
+static const struct kparam_string __param_string_dhsw = { sizeof(dhsw), dhsw };
+__module_param_call("", dhsw, &param_ops_string,
+		    .str = &__param_string_dhsw, 0444, -1, 0);\
+__MODULE_PARM_TYPE(dhsw, "string");
 
 #if defined(CONFIG_FPE_NWFPE) || defined(CONFIG_FPE_FASTFPE)
 char fpe_type[8];
