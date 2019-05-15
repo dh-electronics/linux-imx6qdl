@@ -19,6 +19,9 @@
 #define PU_SOC_VOLTAGE_HIGH	1275000
 #define FREQ_1P2_GHZ		1200000000
 
+int reg_speed_grading = (-1);
+module_param(reg_speed_grading, int, 0);
+
 static struct regulator *arm_reg;
 static struct regulator *pu_reg;
 static struct regulator *soc_reg;
@@ -253,6 +256,12 @@ static int imx6q_opp_check_speed_grading(struct device *dev)
 	val >>= OCOTP_CFG3_SPEED_SHIFT;
 	val &= 0x3;
 
+	if (reg_speed_grading >= 0) {
+		dev_info(dev, "Overwrite SPEED_GRADING 0x%X => 0x%X\n",
+			 val, reg_speed_grading & 0x3);
+		val = reg_speed_grading & 0x3;
+	}
+
 	if (val < OCOTP_CFG3_SPEED_996MHZ)
 		if (dev_pm_opp_disable(dev, 996000000))
 			dev_warn(dev, "failed to disable 996MHz OPP\n");
@@ -315,6 +324,12 @@ static int imx6ul_opp_check_speed_grading(struct device *dev)
 	 */
 	val >>= OCOTP_CFG3_SPEED_SHIFT;
 	val &= 0x3;
+
+	if (reg_speed_grading >= 0) {
+		dev_info(dev, "Overwrite SPEED_GRADING 0x%X => 0x%X\n",
+			 val, reg_speed_grading & 0x3);
+		val = reg_speed_grading & 0x3;
+	}
 
 	if (of_machine_is_compatible("fsl,imx6ul")) {
 		if (val != OCOTP_CFG3_6UL_SPEED_696MHZ)
