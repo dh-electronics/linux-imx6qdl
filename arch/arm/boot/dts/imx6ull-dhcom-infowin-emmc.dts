@@ -69,6 +69,10 @@
 &i2c2 { /* DHCOM I2C1 */
 };
 
+&uart2 {
+	status = "disabled";
+};
+
 &weim {
 	/*
 	 * Configuring the WEIM interface to send display data to
@@ -144,6 +148,9 @@
 
 	pinctrl_hog_infowin: hog-infowin-grp {
 		fsl,pins = <
+			MX6UL_PAD_UART2_TX_DATA__GPIO1_IO20	0x400120b0
+			MX6UL_PAD_UART2_RX_DATA__GPIO1_IO21	0x400120b0
+
 			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I */
 			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J */
 			/* CSI_PIXCLK is used for parallel interface OE       GPIO K */
