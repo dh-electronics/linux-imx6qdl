@@ -16,8 +16,8 @@
 
 #ifndef CFG_BOOTFLASH
 &ecspi1 { /* DHCOM SPI1 */
-	spidev@0 { /* For now rohm,dh2228fv is as dummy device to avoid kernel backtrace */
-		compatible = "rohm,dh2228fv";
+	spidev@0 {
+		compatible = "dh,dhcom-board";
 		reg = <0>;
 		spi-max-frequency = <54000000>;
 		spi-cpha; /* Shifted clock phase (CPHA) mode */
