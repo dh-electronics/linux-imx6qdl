@@ -544,6 +544,11 @@ static void dma_tx_callback(void *data)
 	spin_lock_irqsave(&sport->port.lock, flags);
 	if (!uart_circ_empty(xmit) && !uart_tx_stopped(&sport->port))
 		imx_dma_tx(sport);
+	else if (sport->port.rs485.flags & SER_RS485_ENABLED) {
+		u32 ucr4 = readl(sport->port.membase + UCR4);
+		ucr4 |= UCR4_TCEN;
+		writel(ucr4, sport->port.membase + UCR4);;
+	}
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 }
 
@@ -555,10 +560,15 @@ static void imx_dma_tx(struct imx_port *sport)
 	struct dma_chan	*chan = sport->dma_chan_tx;
 	struct device *dev = sport->port.dev;
 	unsigned long temp;
+	u32 ucr4;
 	int ret;
 
 	if (sport->dma_is_txing)
 		return;
+
+	ucr4 = readl(sport->port.membase + UCR4);
+	ucr4 &= ~UCR4_TCEN;
+	writel(ucr4, sport->port.membase + UCR4);
 
 	sport->tx_bytes = uart_circ_chars_pending(xmit);
 
@@ -633,12 +643,17 @@ static void imx_start_tx(struct uart_port *port)
 		        else
 			        imx_rs485_rts_gpio_off(sport);
 		}
-                writel(temp, port->membase + UCR2);
+		writel(temp, port->membase + UCR2);
 
-		/* enable transmitter and shifter empty irq */
-		temp = readl(port->membase + UCR4);
-		temp |= UCR4_TCEN;
-		writel(temp, port->membase + UCR4);
+		/*
+		 * Enable transmitter and shifter empty irq only if DMA is off.
+		 * In the DMA case this is done in the tx-callback.
+		 */
+		if (!sport->dma_is_enabled) {
+			u32 ucr4 = readl(port->membase + UCR4);
+			ucr4 |= UCR4_TCEN;
+			writel(ucr4, port->membase + UCR4);
+		}
 	}
 
 	if (!sport->dma_is_enabled) {
