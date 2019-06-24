@@ -85,6 +85,7 @@
 static const int multicast_filter_limit = 32;
 
 #define MAX_READ_REQUEST_SHIFT	12
+#define MAX_PCI_EXP_DEVCTL_READRQ PCI_EXP_DEVCTL_READRQ_512B
 #define TX_DMA_BURST	7	/* Maximum PCI burst, '7' is unlimited */
 #define InterFrameGap	0x03	/* 3 means InterFrameGap = the shortest one */
 
@@ -896,6 +897,10 @@ static void rtl_unlock_work(struct rtl8169_private *tp)
 
 static void rtl_tx_performance_tweak(struct pci_dev *pdev, u16 force)
 {
+	if ((force & PCI_EXP_DEVCTL_READRQ) > MAX_PCI_EXP_DEVCTL_READRQ) {
+		force &= ~PCI_EXP_DEVCTL_READRQ;
+		force |= MAX_PCI_EXP_DEVCTL_READRQ;
+	}
 	pcie_capability_clear_and_set_word(pdev, PCI_EXP_DEVCTL,
 					   PCI_EXP_DEVCTL_READRQ, force);
 }
