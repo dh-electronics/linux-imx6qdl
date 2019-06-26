@@ -14,7 +14,15 @@
 // Interfaces of the DHCOM hispeed connector will be configured here with the
 // status "disabled". If you need the interface set it to status "okay" in the
 // corresponding board file.
+&hdmi {
+	ddc-i2c-bus = <&DHCOM_I2C1>;
+	status = "disabled";
+};
+
 &pcie {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_dhcom_pcie>;
+	reset-gpio = <&gpio6 14 GPIO_ACTIVE_LOW>;				// GPIO J
 	status = "disabled";
 };
 
@@ -24,3 +32,13 @@
 	status = "disabled";
 };
 #endif
+
+&iomuxc {
+	imx6qdl-dhcom_hispeed {
+		pinctrl_dhcom_pcie: pcie_grp {
+			fsl,pins = <
+				MX6QDL_PAD_CSI0_DATA_EN__GPIO5_IO20 0x1b0b1	// PCIe_WAKE (#148)
+			>;
+		};
+	};
+};

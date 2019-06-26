@@ -369,7 +369,7 @@
 };
 
 
-// Interfaces of the DHCOM hispeed connector will be activated here. Baord
+// Interfaces of the DHCOM hispeed connector will be activated here. Board
 // specific configuration can also be made here. This section is only active if
 // you load an hispeed device tree e.g. imx6q-dhcom4H-pdk2
 #ifdef DHCOM_HISPEED
@@ -413,10 +413,11 @@
 };
 #endif
 
+&hdmi {
+	status = "okay";
+};
+
 &pcie {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_dhcom_pcie>;
-	reset-gpio = <&gpio6 14 GPIO_ACTIVE_LOW>;				// GPIO J
 	status = "okay";
 };
 
@@ -429,12 +430,6 @@
 
 &iomuxc {
 	imx6qdl-pdk2_hispeed {
-		pinctrl_dhcom_pcie: pcie_grp {
-			fsl,pins = <
-				MX6QDL_PAD_CSI0_DATA_EN__GPIO5_IO20 0x1b0b1	// PCIe_WAKE (#148)
-			>;
-		};
-
 		pinctrl_dhcom_enet_1G: enet_1G_grp {				// 1GBit ethernet
 			fsl,pins = <
 				MX6QDL_PAD_ENET_MDIO__ENET_MDIO       0x100b0
