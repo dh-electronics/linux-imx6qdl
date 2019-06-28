@@ -1,0 +1,136 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2018 DH electronics GmbH
+ */
+
+/dts-v1/;
+
+#include "imx6ull-dhcom.dtsi"
+/* Special configurations */
+//#include "imx6ull-dhcom-cfg-sdcard.dtsi"
+
+/ {
+	model = "DHCOM i.MX6ULL on nBox (WiFi/BT)";
+	compatible = "dh,imx6ull-dhcom-nbox-wifi", "fsl,imx6ull";
+};
+
+#ifndef CFG_BOOTFLASH
+&ecspi1 { /* DHCOM SPI1 */
+	spidev@0 {
+		compatible = "dh,dhcom-board";
+		reg = <0>;
+		spi-max-frequency = <54000000>;
+		spi-cpha; /* Shifted clock phase (CPHA) mode */
+		spi-cpol; /* Inverse clock polarity (CPOL) mode */
+	};
+};
+#endif
+
+/delete-node/ &eth_phy0;
+&fec1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet1>;
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		eth_phy0: ethernet-phy@0 { /* SMSC LAN8710Ai */
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_snvs_eth_phy0>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+		/* TODO: If this is active SMSC phy isn't accessible
+			reset-gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <1000>;
+			reset-deassert-us = <10000>; */
+			clocks = <&clks IMX6UL_CLK_ENET_REF>;
+			clock-names = "rmii-ref";
+			interrupt-parent = <&gpio5>;
+			interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+			smsc,disable-energy-detect; /* Make plugin detection reliable */
+			max-speed = <100>;
+			status = "okay";
+		};
+	};
+};
+
+&fec2 {
+	status = "disabled";
+};
+
+&i2c1 { /* DHCOM I2C2 */
+	clock-frequency = <400000>; /* Raise frequency up */
+};
+
+&i2c2 { /* DHCOM I2C1 */
+	clock-frequency = <400000>; /* Raise frequency up */
+
+	eeprom@50{
+		compatible = "atmel,24c256";
+		reg = <0x50>;
+		pagesize = <64>;
+	};
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_nbox>;
+
+	pinctrl_hog_nbox: hog-nbox-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> BT_REG_ON */
+			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J */
+			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x400120b0 /* GPIO K */
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L */
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19		0x400120b0 /* GPIO M */
+#ifndef CFG_BOOTFLASH
+			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N */
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O */
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P */
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q */
+#endif
+			MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x400120b0 /* GPIO R */
+			MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x400120b0 /* GPIO S */
+			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x400120b0 /* GPIO T */
+			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x400120b0 /* GPIO U */
+			/* There isn't a pin defined                          GPIO V */
+			/* There isn't a pin defined                          GPIO W */
+			MX6UL_PAD_JTAG_TMS__GPIO1_IO11		0x400120b0 /* INT_HIGHEST_PRIORITY */
+		>;
+	};
+
+	pinctrl_enet1: enet1-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO07__ENET1_MDC		0x1b0b0
+			MX6UL_PAD_GPIO1_IO06__ENET1_MDIO	0x1b0b0
+			MX6UL_PAD_ENET1_RX_EN__ENET1_RX_EN	0x1b0b0
+			MX6UL_PAD_ENET1_RX_ER__ENET1_RX_ER	0x1b0b0
+			MX6UL_PAD_ENET1_RX_DATA0__ENET1_RDATA00	0x1b0b0
+			MX6UL_PAD_ENET1_RX_DATA1__ENET1_RDATA01	0x1b0b0
+			MX6UL_PAD_ENET1_TX_EN__ENET1_TX_EN	0x1b0b0
+			MX6UL_PAD_ENET1_TX_DATA0__ENET1_TDATA00	0x1b0b0
+			MX6UL_PAD_ENET1_TX_DATA1__ENET1_TDATA01	0x1b0b0
+			MX6UL_PAD_ENET1_TX_CLK__ENET1_REF_CLK1	0x4001b031
+			MX6UL_PAD_LCD_DATA18__GPIO3_IO23	0xb0 /* SMSC phy reset */
+		>;
+	};
+};
+
+&iomuxc_snvs {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_snvs_hog_nbox>;
+
+	pinctrl_snvs_hog_nbox: snvs-hog-nbox-grp {
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A */
+			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B */
+			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C */
+			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D */
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x400120b0 /* GPIO E */
+			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x400120b0 /* GPIO G */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x400120b0 /* GPIO H -> WL_REG_ON */
+		>;
+	};
+};
