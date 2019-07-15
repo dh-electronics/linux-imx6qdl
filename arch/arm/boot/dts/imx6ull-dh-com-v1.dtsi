@@ -343,6 +343,10 @@
 	status = "disabled"; /* Should be actived in a dt layer above */
 };
 
+&ocotp {
+	read-only; /* Don't get write access by default */
+};
+
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1>;
