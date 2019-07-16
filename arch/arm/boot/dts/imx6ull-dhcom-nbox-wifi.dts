@@ -73,6 +73,12 @@
 	};
 };
 
+&uart5 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart5>;
+	status = "okay";
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog_nbox>;
@@ -92,8 +98,8 @@
 #endif
 			MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x400120b0 /* GPIO R */
 			MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x400120b0 /* GPIO S */
-			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x400120b0 /* GPIO T */
-			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x400120b0 /* GPIO U */
+			/* CSI_DATA00 is used for uart5 TX                    GPIO T */
+			/* CSI_DATA01 is used for uart5 RX                    GPIO U */
 			/* There isn't a pin defined                          GPIO V */
 			/* There isn't a pin defined                          GPIO W */
 			MX6UL_PAD_JTAG_TMS__GPIO1_IO11		0x400120b0 /* INT_HIGHEST_PRIORITY */
@@ -113,6 +119,13 @@
 			MX6UL_PAD_ENET1_TX_DATA1__ENET1_TDATA01	0x1b0b0
 			MX6UL_PAD_ENET1_TX_CLK__ENET1_REF_CLK1	0x4001b031
 			MX6UL_PAD_LCD_DATA18__GPIO3_IO23	0xb0 /* SMSC phy reset */
+		>;
+	};
+
+	pinctrl_uart5: uart5-grp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_DATA00__UART5_DCE_TX	0x1b0b1
+			MX6UL_PAD_CSI_DATA01__UART5_DCE_RX	0x1b0b1
 		>;
 	};
 };
