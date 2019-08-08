@@ -9,6 +9,7 @@
 /* Special configurations */
 #include "imx6ull-dh-com-cfg-emmc.dtsi"
 //#include "imx6ull-dh-com-cfg-sdcard.dtsi"
+#include "imx6ull-dh-com-cfg-bootflash.dtsi"
 
 / {
 	model = "DHCOM i.MX6ULL on nBox (WiFi/BT)";
