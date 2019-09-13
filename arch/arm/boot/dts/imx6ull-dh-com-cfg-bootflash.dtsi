@@ -7,7 +7,7 @@
  * Special configuration: bootflash
  *
  * Enabled:  Access to bootflash
- * Disabled: DHCOM SPI1 with spidev, GPIO N, GPIO O, GPIO P, GPIO Q
+ * Disabled: DHCOM SPI1 with spidev, GPIO N/O/P/Q/R/S/T/U
  */
 
 #define CFG_BOOTFLASH
