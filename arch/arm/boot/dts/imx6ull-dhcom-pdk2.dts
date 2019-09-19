@@ -5,15 +5,15 @@
 
 /dts-v1/;
 
-#include "imx6ull-dh-com-v1.dtsi"
+#include "imx6ull-dhcom.dtsi"
 /* Special configurations */
-//#include "imx6ull-dh-com-cfg-emmc.dtsi"
-//#include "imx6ull-dh-com-cfg-sdcard.dtsi"
-//#include "imx6ull-dh-com-cfg-bootflash.dtsi"
+//#include "imx6ull-dhcom-cfg-emmc.dtsi"
+//#include "imx6ull-dhcom-cfg-sdcard.dtsi"
+//#include "imx6ull-dhcom-cfg-bootflash.dtsi"
 
 / {
 	model = "DHCOM i.MX6ULL on Premium Developer Kit (2)";
-	compatible = "dh,imx6ull-dh-pdk2", "fsl,imx6ull";
+	compatible = "dh,imx6ull-dhcom-pdk2", "fsl,imx6ull";
 
 	clk_ext_audio_codec: clock-codec {
 		compatible = "fixed-clock";

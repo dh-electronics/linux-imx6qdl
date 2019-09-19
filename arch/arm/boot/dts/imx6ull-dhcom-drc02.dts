@@ -5,15 +5,15 @@
 
 /dts-v1/;
 
-#include "imx6ull-dh-com-v1.dtsi"
+#include "imx6ull-dhcom.dtsi"
 /* Special configurations */
-//#include "imx6ull-dh-com-cfg-emmc.dtsi"
-//#include "imx6ull-dh-com-cfg-sdcard.dtsi"
-//#include "imx6ull-dh-com-cfg-bootflash.dtsi"
+//#include "imx6ull-dhcom-cfg-emmc.dtsi"
+//#include "imx6ull-dhcom-cfg-sdcard.dtsi"
+//#include "imx6ull-dhcom-cfg-bootflash.dtsi"
 
 / {
 	model = "DHCOM i.MX6ULL on DHCOM DRC02";
-	compatible = "dh,imx6ull-dh-drc02", "fsl,imx6ull";
+	compatible = "dh,imx6ull-dhcom-drc02", "fsl,imx6ull";
 };
 
 #ifndef CFG_BOOTFLASH
