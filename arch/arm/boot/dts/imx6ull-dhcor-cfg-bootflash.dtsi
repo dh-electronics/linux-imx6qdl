@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2018 DH electronics GmbH
+ */
+
+/*
+ * Special configuration: bootflash
+ *
+ * Enabled:  Access to bootflash
+ * Disabled: DHCOM SPI1 with spidev, GPIO N/O/P/Q
+ */
+
+#define CFG_BOOTFLASH
+
+/ {
+	/*
+	 * Pin SPI_BOOT_FLASH_EN (1.9) = LOW means
+	 * SPI bootflash =>     accessible
+	 * SPI bus       => non-accessible
+	 */
+	reg_bootflash: regulator-spi-bootflash {
+		compatible = "regulator-fixed";
+		regulator-name = "spi_bootflash_enable";
+		regulator-always-on;
+		gpio = <&gpio1 9 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&ecspi1 { /* SPI wired only to bootflash */
+	cs-gpios = <&gpio4 26 GPIO_ACTIVE_LOW>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi1_bootflash>;
+	power-supply = <&reg_bootflash>;
+	status = "okay";
+
+	bootflash@0 { /* Winbond w25q16 nor-flash */
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "winbond,w25q16", "jedec,spi-nor";
+		spi-max-frequency = <50000000>;
+		reg = <0>;
+		m25p,fast-read;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spi-bootflash"; /* Identifier for the update kernel */
+				reg = <0x0 0x120000>;
+			};
+
+			partition@120000 { /* 917.504 byte for the user available */
+				label = "spi-userflash";
+				reg = <0x120000 0xe0000>;
+			};
+		};
+	};
+};
+
+&iomuxc {
+	pinctrl_ecspi1_bootflash: ecspi1-bootflash-grp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_DATA07__ECSPI1_MISO	0x100b1
+			MX6UL_PAD_CSI_DATA06__ECSPI1_MOSI	0x100b1
+			MX6UL_PAD_CSI_DATA04__ECSPI1_SCLK	0x100b1
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x1b0b0    /* SS0 */
+		>;
+	};
+};

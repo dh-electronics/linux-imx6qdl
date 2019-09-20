@@ -1,0 +1,219 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2019 DH electronics GmbH
+ */
+
+#include "imx6ull.dtsi"
+
+/ {
+	aliases {
+		/delete-property/ mmc0; /* Avoid double definitions */
+		/delete-property/ mmc1;
+		/delete-property/ mmc2;
+	};
+
+	chosen {
+		stdout-path = &uart1;
+	};
+
+	memory@80000000 { /* Appropriate memory size will be filled by u-boot */
+		reg = <0x80000000 0>;
+	};
+
+	/*
+	 * Pin SPI_BOOT_FLASH_EN (1.9) = HIGH means
+	 * SPI bootflash => non-accessible
+	 * SPI bus       =>     accessible
+	 */
+	/omit-if-no-ref/ reg_spi_bus: regulator-spi-bus {
+		compatible = "regulator-fixed";
+		regulator-name = "spi_bus_enable";
+		regulator-always-on;
+		gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		/* First 1 MiB DDR3 memory for data/firmware like EDID */
+		firmware@80000000 {
+			reg = <0x80000000 0x100000>;
+			no-map;
+		};
+	};
+
+	/omit-if-no-ref/ usdhc1_pwrseq: usdhc1-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>; /* WL_REG_ON by GPIO H */
+	};
+};
+
+&clks {
+	assigned-clocks = <&clks IMX6UL_CLK_PLL3_PFD2>;
+	assigned-clock-rates = <320000000>;
+};
+
+&i2c1 {
+	clock_frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c1>;
+	status = "okay";
+
+	pmic@58 {
+		compatible = "dlg,da9061";
+		reg = <0x58>;
+		interrupt-parent = <&gpio5>;
+		interrupts = <9 IRQ_TYPE_LEVEL_LOW>; /* GPIO H */
+		interrupt-controller;
+		status = "disabled"; /* TODO: Activate and test PMIC */
+
+		onkey {
+			compatible = "dlg,da9061-onkey", "dlg,da9062-onkey";
+			dlg,disable-key-power;
+		};
+
+		watchdog {
+			compatible = "dlg,da9061-watchdog", "dlg,da9062-watchdog";
+		};
+
+		thermal {
+			compatible = "dlg,da9061-thermal", "dlg,da9062-thermal";
+			polling-delay-passive = <3000>;
+		};
+
+		regulators {
+			vdd_soc_in_1v4: buck1 {
+				regulator-name = "vdd_soc_in_1v4";
+				regulator-min-microvolt = <730000>;
+				regulator-max-microvolt = <1380000>;
+				regulator-always-on;
+			};
+
+			vcc_3v3: buck2 {
+				regulator-name = "vcc_3v3";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vcc_ddr_1v35: buck3 {
+				regulator-name = "vcc_ddr_1v35";
+				regulator-min-microvolt = <1350000>;
+				regulator-max-microvolt = <1350000>;
+				regulator-always-on;
+			};
+
+			vcc_2v5: ldo1 {
+				regulator-name = "vcc_2v5";
+				regulator-min-microvolt = <2500000>;
+				regulator-max-microvolt = <2500000>;
+				regulator-always-on;
+			};
+
+			vdd_snvs_in_3v3: ldo2 {
+				regulator-name = "vdd_snvs_in_3v3";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vcc_1v8: ldo3 {
+				regulator-name = "vcc_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			vcc_1v2: ldo4 {
+				regulator-name = "vcc_1v2";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+			};
+		};
+	};
+};
+
+&ocotp {
+	read-only; /* Don't get write access by default */
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1>;
+	status = "okay";
+};
+
+&uart2 { /* BT on LGA */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart2>;
+	uart-has-rtscts;
+	status = "okay";
+};
+
+&usdhc1 { /* WiFi on LGA */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc1_wifi>;
+	bus-width = <4>;
+	no-1-8-v;
+	non-removable;
+	mmc-pwrseq = <&usdhc1_pwrseq>;
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	brcmf: wifi@1 {
+		compatible = "brcm,bcm4329-fmac";
+		reg = <1>;
+	};
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_dhcor>;
+
+	pinctrl_hog_dhcor: hog-dhcor-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0x4001b0b0 /* SPI_BOOT_FLASH_EN */
+		>;
+	};
+
+	pinctrl_i2c1: i2c1-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART4_TX_DATA__I2C1_SCL	0x4001b8b0
+			MX6UL_PAD_UART4_RX_DATA__I2C1_SDA	0x4001b8b0
+		>;
+	};
+
+	pinctrl_uart1: uart1-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_TX_DATA__UART1_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART1_RX_DATA__UART1_DCE_RX	0x1b0b1
+		>;
+	};
+
+	pinctrl_uart2: uart2-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART2_TX_DATA__UART2_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX	0x1b0b1
+			MX6UL_PAD_UART3_RX_DATA__UART2_DCE_RTS	0x1b0b1
+			MX6UL_PAD_UART3_TX_DATA__UART2_DCE_CTS	0x1b0b1
+		>;
+	};
+
+	pinctrl_usdhc1_wifi: usdhc1-wifi-grp {
+		fsl,pins = <
+			MX6UL_PAD_SD1_CMD__USDHC1_CMD		0x1b0b0
+			MX6UL_PAD_SD1_CLK__USDHC1_CLK		0x100b0
+			MX6UL_PAD_SD1_DATA0__USDHC1_DATA0	0x1b0b0
+			MX6UL_PAD_SD1_DATA1__USDHC1_DATA1	0x1b0b0
+			MX6UL_PAD_SD1_DATA2__USDHC1_DATA2	0x1b0b0
+			MX6UL_PAD_SD1_DATA3__USDHC1_DATA3	0x1b0b0
+		>;
+	};
+};
+
+&iomuxc_snvs {
+};
