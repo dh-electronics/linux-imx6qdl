@@ -426,13 +426,21 @@
 };
 
 &iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_dhcom>;
+
+	pinctrl_hog_dhcom: hog-dhcom-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0x4001b0b0 /* SPI_BOOT_FLASH_EN */
+		>;
+	};
+
 	pinctrl_ecspi1: ecspi1-grp {
 		fsl,pins = <
 			MX6UL_PAD_LCD_DATA23__ECSPI1_MISO	0x100b1
 			MX6UL_PAD_LCD_DATA22__ECSPI1_MOSI	0x100b1
 			MX6UL_PAD_LCD_DATA20__ECSPI1_SCLK	0x100b1
 			MX6UL_PAD_LCD_DATA21__GPIO3_IO26	0x1b0b0    /* SS0 */
-			MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0x4001b0b0 /* SPI_BOOT_FLASH_EN */
 		>;
 	};
 
