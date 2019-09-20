@@ -561,7 +561,8 @@ dtb-$(CONFIG_SOC_IMX6UL) += \
 	imx6ull-colibri-eval-v3.dtb \
 	imx6ull-colibri-wifi-eval-v3.dtb \
 	imx6ull-dhcom-drc02.dtb \
-	imx6ull-dhcom-pdk2.dtb
+	imx6ull-dhcom-pdk2.dtb \
+	imx6ull-dhcor-example.dtb
 dtb-$(CONFIG_SOC_IMX7D) += \
 	imx7d-cl-som-imx7.dtb \
 	imx7d-colibri-emmc-eval-v3.dtb \
