@@ -168,6 +168,7 @@
 #endif
 			/* There isn't a pin defined                          GPIO V */
 			/* There isn't a pin defined                          GPIO W */
+			MX6UL_PAD_JTAG_TMS__GPIO1_IO11		0x400120b0 /* INT_HIGHEST_PRIORITY */
 		>;
 	};
 
