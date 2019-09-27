@@ -12,7 +12,7 @@
 		rtc1 = &snvs_rtc;
 		/delete-property/ mmc0; /* Avoid double definitions */
 		/delete-property/ mmc1;
-		/delete-property/ mmc2;
+		mmc2 = &usdhc2; /* eMMC (on module) should be mmc2 */
 	};
 
 	chosen {
@@ -213,13 +213,6 @@
 			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
 			/* 24     25     26     27     28     29     30     31 */
 			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ;
-};
-
-&gpmi {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_gpmi_nand>;
-	nand-on-flash-bbt;
-	status = "okay";
 };
 
 &i2c1 { /* DHCOM I2C2 */
@@ -425,6 +418,16 @@
 	};
 };
 
+&usdhc2 { /* eMMC (on module) */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc2>;
+	non-removable;
+	bus-width = <8>;
+	no-1-8-v;
+	keep-power-in-suspend;
+	status = "okay";
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog_dhcom>;
@@ -486,26 +489,6 @@
 		fsl,pins = <
 			MX6UL_PAD_UART2_RTS_B__FLEXCAN2_RX	0x1b020
 			MX6UL_PAD_UART2_CTS_B__FLEXCAN2_TX	0x1b020
-		>;
-	};
-
-	pinctrl_gpmi_nand: gpmi-nand-grp {
-		fsl,pins = <
-			MX6UL_PAD_NAND_CLE__RAWNAND_CLE		0xb0b1
-			MX6UL_PAD_NAND_ALE__RAWNAND_ALE		0xb0b1
-			MX6UL_PAD_NAND_WP_B__RAWNAND_WP_B	0xb0b1
-			MX6UL_PAD_NAND_READY_B__RAWNAND_READY_B	0xb000
-			MX6UL_PAD_NAND_CE0_B__RAWNAND_CE0_B	0xb0b1
-			MX6UL_PAD_NAND_RE_B__RAWNAND_RE_B	0xb0b1
-			MX6UL_PAD_NAND_WE_B__RAWNAND_WE_B	0xb0b1
-			MX6UL_PAD_NAND_DATA00__RAWNAND_DATA00	0xb0b1
-			MX6UL_PAD_NAND_DATA01__RAWNAND_DATA01	0xb0b1
-			MX6UL_PAD_NAND_DATA02__RAWNAND_DATA02	0xb0b1
-			MX6UL_PAD_NAND_DATA03__RAWNAND_DATA03	0xb0b1
-			MX6UL_PAD_NAND_DATA04__RAWNAND_DATA04	0xb0b1
-			MX6UL_PAD_NAND_DATA05__RAWNAND_DATA05	0xb0b1
-			MX6UL_PAD_NAND_DATA06__RAWNAND_DATA06	0xb0b1
-			MX6UL_PAD_NAND_DATA07__RAWNAND_DATA07	0xb0b1
 		>;
 	};
 
@@ -601,6 +584,22 @@
 			MX6UL_PAD_SD1_DATA1__USDHC1_DATA1	0x1b0b0
 			MX6UL_PAD_SD1_DATA2__USDHC1_DATA2	0x1b0b0
 			MX6UL_PAD_SD1_DATA3__USDHC1_DATA3	0x1b0b0
+		>;
+	};
+
+	pinctrl_usdhc2: usdhc2-grp {
+		fsl,pins = <
+			MX6UL_PAD_NAND_RE_B__USDHC2_CLK		0x10069
+			MX6UL_PAD_NAND_WE_B__USDHC2_CMD		0x17059
+			MX6UL_PAD_NAND_DATA00__USDHC2_DATA0	0x17059
+			MX6UL_PAD_NAND_DATA01__USDHC2_DATA1	0x17059
+			MX6UL_PAD_NAND_DATA02__USDHC2_DATA2	0x17059
+			MX6UL_PAD_NAND_DATA03__USDHC2_DATA3	0x17059
+			MX6UL_PAD_NAND_DATA04__USDHC2_DATA4	0x17059
+			MX6UL_PAD_NAND_DATA05__USDHC2_DATA5	0x17059
+			MX6UL_PAD_NAND_DATA06__USDHC2_DATA6	0x17059
+			MX6UL_PAD_NAND_DATA07__USDHC2_DATA7	0x17059
+			MX6UL_PAD_NAND_ALE__USDHC2_RESET_B	0x17059 /* SD2 RESET */
 		>;
 	};
 };

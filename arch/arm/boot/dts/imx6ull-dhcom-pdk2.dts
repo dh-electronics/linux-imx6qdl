@@ -7,7 +7,7 @@
 
 #include "imx6ull-dhcom.dtsi"
 /* Special configurations */
-//#include "imx6ull-dhcom-cfg-emmc.dtsi"
+//#include "imx6ull-dhcom-cfg-nand.dtsi"
 //#include "imx6ull-dhcom-cfg-sdcard.dtsi"
 //#include "imx6ull-dhcom-cfg-bootflash.dtsi"
 
