@@ -68,8 +68,8 @@
 	pmic@58 {
 		compatible = "dlg,da9061";
 		reg = <0x58>;
-		interrupt-parent = <&gpio5>;
-		interrupts = <9 IRQ_TYPE_LEVEL_LOW>; /* GPIO H */
+		interrupt-parent = <&gpio4>;
+		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-controller;
 		status = "disabled"; /* TODO: Activate and test PMIC */
 
