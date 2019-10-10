@@ -25,7 +25,7 @@
 	 * SPI bootflash => non-accessible
 	 * SPI bus       =>     accessible
 	 */
-	/omit-if-no-ref/ reg_spi_bus: regulator-spi-bus {
+	reg_spi_bus: regulator-spi-bus {
 		compatible = "regulator-fixed";
 		regulator-name = "spi_bus_enable";
 		regulator-always-on;
