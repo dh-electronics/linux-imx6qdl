@@ -463,6 +463,16 @@ config LATTICE_ECP3_CONFIG
 
 	  If unsure, say N.
 
+config SO_INTF
+	bool "S0 interface driver"
+	depends on SYSFS
+	help
+	  S0 Interface defined in EN 62053-31. For receiving of consumption
+	  measured values in building automation. The interface should not be
+	  confused with the S0 bus of ISDN.
+
+	  If unsure, say N.
+
 config SRAM
 	bool "Generic on-chip SRAM driver"
 	depends on HAS_IOMEM
