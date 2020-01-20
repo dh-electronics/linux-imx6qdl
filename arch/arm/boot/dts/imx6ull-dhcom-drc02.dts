@@ -39,6 +39,10 @@
 &i2c2 { /* DHCOM I2C1 */
 };
 
+&uart2 { /* Use UART as RS485 */
+	linux,rs485-enabled-at-boot-time;
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog_drc02>;
