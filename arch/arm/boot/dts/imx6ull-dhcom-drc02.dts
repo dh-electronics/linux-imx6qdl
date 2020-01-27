@@ -28,6 +28,39 @@
 };
 #endif
 
+/delete-node/ &eth_phy0;
+&fec1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet1>;
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		eth_phy0: ethernet-phy@0 { /* SMSC LAN8710Ai */
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_snvs_eth_phy0>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+		/* TODO: If this is active SMSC phy isn't accessible
+			reset-gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <1000>;
+			reset-deassert-us = <10000>; */
+			clocks = <&clks IMX6UL_CLK_ENET_REF>;
+			clock-names = "rmii-ref";
+			interrupt-parent = <&gpio5>;
+			interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+			smsc,disable-energy-detect; /* Make plugin detection reliable */
+			max-speed = <100>;
+			status = "okay";
+		};
+	};
+};
+
+&fec2 {
+	status = "disabled";
+};
+
 &i2c1 { /* DHCOM I2C2 */
 	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
 		compatible = "atmel,24c04";
@@ -67,6 +100,22 @@
 			/* There isn't a pin defined                          GPIO V -> Not connected */
 			/* There isn't a pin defined                          GPIO W -> Not connected */
 			MX6UL_PAD_JTAG_TMS__GPIO1_IO11		0x400120b0 /* INT_HIGHEST_PRIORITY -> IN 2 */
+		>;
+	};
+
+	pinctrl_enet1: enet1-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO07__ENET1_MDC		0x1b0b0
+			MX6UL_PAD_GPIO1_IO06__ENET1_MDIO	0x1b0b0
+			MX6UL_PAD_ENET1_RX_EN__ENET1_RX_EN	0x1b0b0
+			MX6UL_PAD_ENET1_RX_ER__ENET1_RX_ER	0x1b0b0
+			MX6UL_PAD_ENET1_RX_DATA0__ENET1_RDATA00	0x1b0b0
+			MX6UL_PAD_ENET1_RX_DATA1__ENET1_RDATA01	0x1b0b0
+			MX6UL_PAD_ENET1_TX_EN__ENET1_TX_EN	0x1b010
+			MX6UL_PAD_ENET1_TX_DATA0__ENET1_TDATA00	0x1b010
+			MX6UL_PAD_ENET1_TX_DATA1__ENET1_TDATA01	0x1b010
+			MX6UL_PAD_ENET1_TX_CLK__ENET1_REF_CLK1	0x4001b010
+			MX6UL_PAD_LCD_DATA18__GPIO3_IO23	0xb0 /* SMSC phy reset */
 		>;
 	};
 };
