@@ -78,6 +78,10 @@ module_param(timeout, uint, 0);
 MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
 				__MODULE_STRING(IMX2_WDT_DEFAULT_TIME) ")");
 
+static bool keepaliveoff = false;
+module_param(keepaliveoff, bool, 0);
+MODULE_PARM_DESC(keepaliveoff, "Disable the keepalive timer (default=false)");
+
 static const struct watchdog_info imx2_wdt_info = {
 	.identity = "imx2+ watchdog",
 	.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
@@ -306,8 +310,14 @@ static int __init imx2_wdt_probe(struct platform_device *pdev)
 	watchdog_init_timeout(wdog, timeout, &pdev->dev);
 
 	if (imx2_wdt_is_running(wdev)) {
-		imx2_wdt_set_timeout(wdog, wdog->timeout);
-		set_bit(WDOG_HW_RUNNING, &wdog->status);
+		/*
+		 * Boot parameter keepaliveoff (default=false)
+		 * Let the time elapse if watchdog is already enabled
+		 */
+		if (keepaliveoff == false) {
+			imx2_wdt_set_timeout(wdog, wdog->timeout);
+			set_bit(WDOG_HW_RUNNING, &wdog->status);
+		}
 	}
 
 	/*
@@ -325,6 +335,10 @@ static int __init imx2_wdt_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "timeout %d sec (nowayout=%d)\n",
 		 wdog->timeout, nowayout);
+
+	if (imx2_wdt_is_running(wdev))
+		dev_info(&pdev->dev, "already running (keepaliveoff=%d)\n",
+			 keepaliveoff);
 
 	return 0;
 
