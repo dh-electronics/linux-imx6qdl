@@ -1,5 +1,5 @@
 config RTL8723BU
-	tristate "Realtek 8723B USB WiFi"
-	depends on USB
+	tristate "Realtek 8723BU USB WiFi"
+	depends on USB && CFG80211_WEXT
 	---help---
 	  Help message of RTL8723BU

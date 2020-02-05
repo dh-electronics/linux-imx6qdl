@@ -68,7 +68,11 @@ u32 GlobalDebugLevel = _drv_err_;
 void dump_drv_version(void *sel)
 {
 	DBG_871X_SEL_NL(sel, "%s %s\n", DRV_NAME, DRIVERVERSION);
+    /* Comment this to fix following compile errors:
+     *  error: macro "__DATE__" might prevent reproducible builds [-Werror=date-time]
+     *  error: macro "__TIME__" might prevent reproducible builds [-Werror=date-time]
 	DBG_871X_SEL_NL(sel, "build time: %s %s\n", __DATE__, __TIME__);
+    */
 }
 
 void dump_drv_cfg(void *sel)
