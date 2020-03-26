@@ -12,8 +12,8 @@
 //#include "imx6ull-dhcom-cfg-bootflash.dtsi"
 
 / {
-	model = "DHCOM i.MX6ULL on DRC RUBIN";
-	compatible = "dh,imx6ull-dhcom-drc_rubin", "fsl,imx6ull";
+	model = "DHCOM i.MX6ULL on DRC02 for RUBIN development";
+	compatible = "dh,imx6ull-dhcom-drc_rubin_dev_drc02", "fsl,imx6ull";
 
 	s0intf0 {// GPIO_A
 		id = <0>; // used for minor char dev id
