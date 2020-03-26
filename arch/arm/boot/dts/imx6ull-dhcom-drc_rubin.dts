@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2018 DH electronics GmbH
+ */
+
+/dts-v1/;
+
+#include "imx6ull-dhcom.dtsi"
+/* Special configurations */
+//#include "imx6ull-dhcom-cfg-nand.dtsi"
+#include "imx6ull-dhcom-cfg-sdcard.dtsi"
+//#include "imx6ull-dhcom-cfg-bootflash.dtsi"
+
+/ {
+	model = "DHCOM i.MX6ULL on DRC RUBIN";
+	compatible = "dh,imx6ull-dhcom-drc_rubin", "fsl,imx6ull";
+
+	s0intf0 {// GPIO_A
+		id = <0>; // used for minor char dev id
+		compatible = "dh,s0-intf";
+		interrupt-parent = <&gpio5>;
+		interrupts = <0 IRQ_TYPE_EDGE_RISING>; // use GPIO_A for irq
+		status = "okay";
+	};
+};
+
+#ifndef CFG_BOOTFLASH
+&ecspi1 { /* DHCOM SPI1 */
+	spidev@0 {
+		compatible = "dh,dhcom-board";
+		reg = <0>;
+		spi-max-frequency = <54000000>;
+		spi-cpha; /* Shifted clock phase (CPHA) mode */
+		spi-cpol; /* Inverse clock polarity (CPOL) mode */
+	};
+};
+#endif
+
+&i2c1 { /* DHCOM I2C2 */
+	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
+		compatible = "atmel,24c04";
+		reg = <0x56>;
+		pagesize = <16>;
+	};
+};
+
+&i2c2 { /* DHCOM I2C1 */
+};
+
+&uart2 { /* Use UART as RS485 */
+	linux,rs485-enabled-at-boot-time;
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_drc02>;
+
+	pinctrl_hog_drc02: hog-drc02-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> Prepared for UART1 RTS */
+			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J -> Code_HW_2 */
+			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x400120b0 /* GPIO K -> Code_HW_1 */
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L -> Code_HW_0 */
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19		0x400120b0 /* GPIO M -> Prepared for UART1 CTS */
+#ifndef CFG_BOOTFLASH
+			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N -> Extension connector (XLON U10R2, MBUS, ...) */
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O -> Extension connector (XLON U10R2, MBUS, ...) */
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P -> Prepared for rs485 rts */
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q -> Prepared for rs485 rxen */
+			MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x400120b0 /* GPIO R -> Not connected */
+			MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x400120b0 /* GPIO S -> Not connected */
+			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x400120b0 /* GPIO T -> Not connected */
+			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x400120b0 /* GPIO U -> Not connected */
+#endif
+			/* There isn't a pin defined                          GPIO V -> Not connected */
+			/* There isn't a pin defined                          GPIO W -> Not connected */
+			MX6UL_PAD_JTAG_TMS__GPIO1_IO11		0x400120b0 /* INT_HIGHEST_PRIORITY -> IN 2 */
+		>;
+	};
+};
+
+&iomuxc_snvs {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_snvs_hog_drc02>;
+
+	pinctrl_snvs_hog_drc02: snvs-hog-drc02-grp {
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A -> Display connector */
+			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B -> Display connector */
+			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C -> Display connector */
+			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D -> OUT 2*/
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x400120b0 /* GPIO E -> Display connector */
+			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F -> OUT 1 */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x400120b0 /* GPIO G -> IN 1 */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x400120b0 /* GPIO H -> Reset USB hub */
+		>;
+	};
+};
