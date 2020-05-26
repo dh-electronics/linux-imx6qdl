@@ -37,14 +37,14 @@
 #endif
 
 &i2c1 { /* DHCOM I2C2 */
+};
+
+&i2c2 { /* DHCOM I2C1 */
 	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
 		compatible = "atmel,24c04";
 		reg = <0x56>;
 		pagesize = <16>;
 	};
-};
-
-&i2c2 { /* DHCOM I2C1 */
 };
 
 &uart2 { /* Use UART as RS485 */
