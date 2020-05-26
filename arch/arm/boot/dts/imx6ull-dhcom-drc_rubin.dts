@@ -36,6 +36,21 @@
 };
 #endif
 
+&gpio4 {
+	/*
+	 * NOTE: On DRC Rubin, the RS485_RX_En is controlled by a separate
+	 * GPIO line, however the i.MX6ULL UART driver assumes RX happens
+	 * during TX anyway and that it only controls drive enable DE
+	 * line. Hence, the RX is always enabled here.
+	 */
+	rs485-rx-en {
+		gpio-hog;
+		gpios = <28 GPIO_ACTIVE_HIGH>; /* GPIO N */
+		output-low;
+		line-name = "rs485-rx-en";
+	};
+};
+
 &i2c1 { /* DHCOM I2C2 */
 };
 
@@ -48,7 +63,9 @@
 };
 
 &uart2 { /* Use UART as RS485 */
+	/delete-property/ uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
+	rts-gpios = <&gpio4 19 GPIO_ACTIVE_HIGH>; /* GPIO M */
 };
 
 &iomuxc {
