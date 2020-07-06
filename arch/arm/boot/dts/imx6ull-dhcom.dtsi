@@ -1,0 +1,701 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2018 DH electronics GmbH
+ */
+
+#include "imx6ull.dtsi"
+#include <dt-bindings/pwm/pwm.h>
+
+/ {
+	aliases {
+		rtc0 = &rtc_i2c;
+		rtc1 = &snvs_rtc;
+		/delete-property/ mmc0; /* Avoid double definitions */
+		/delete-property/ mmc1;
+		mmc2 = &usdhc2; /* eMMC (on module) should be mmc2 */
+		spi0 = &ecspi1; /* DHCOM SPI1 */
+		spi1 = &ecspi4; /* DHCOM SPI2 */
+		/delete-property/ spi2; /* Avoid double definitions */
+		/delete-property/ spi3;
+	};
+
+	chosen {
+		stdout-path = &uart1;
+	};
+
+	memory@80000000 { /* Appropriate memory size will be filled by u-boot */
+		device_type = "memory";
+		reg = <0x80000000 0>;
+	};
+
+	reg_ext_3v3_ref: regulator-ext-3v3-ref {
+		compatible = "regulator-fixed";
+		regulator-name = "VCC_3V3_REF";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+
+	/*
+	 * Pin SPI_BOOT_FLASH_EN (1.9) = HIGH means
+	 * SPI bootflash => non-accessible
+	 * SPI bus       =>     accessible
+	 */
+	/omit-if-no-ref/ reg_spi_bus: regulator-spi-bus {
+		compatible = "regulator-fixed";
+		regulator-name = "spi_bus_enable";
+		regulator-always-on;
+		gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	reg_usb_otg1_vbus: regulator-usb-otg1-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb-otg1-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+	};
+
+	reg_usb_otg2_vbus: regulator-usb-otg2-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb-otg2-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&gpio1 5 GPIO_ACTIVE_LOW>;
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		/* First 1 MiB DDR3 memory for data/firmware like EDID */
+		firmware@80000000 {
+			reg = <0x80000000 0x100000>;
+			no-map;
+		};
+	};
+
+	/omit-if-no-ref/ usdhc1_pwrseq: usdhc1-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>; /* WL_REG_ON by GPIO H */
+	};
+};
+
+&can1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexcan1>;
+	status = "okay";
+};
+
+&can2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_flexcan2>;
+	status = "okay";
+};
+
+&clks {
+	assigned-clocks = <&clks IMX6UL_CLK_PLL3_PFD2>;
+	assigned-clock-rates = <320000000>;
+};
+
+&cpu0 {
+	clock-frequency = <900000000>;
+	operating-points = <
+		/* kHz	uV */
+		900000	1275000
+		792000	1250000
+		528000	1175000
+		396000	1025000
+		198000	950000
+	>;
+	fsl,soc-operating-points = <
+		/* KHz	uV */
+		900000	1250000
+		792000	1250000
+		528000	1175000
+		396000	1175000
+		198000	1175000
+	>;
+};
+
+&ecspi1 { /* DHCOM SPI1 */
+	cs-gpios = <&gpio3 26 GPIO_ACTIVE_LOW>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi1>;
+	power-supply = <&reg_spi_bus>;
+	status = "okay";
+};
+
+&ecspi4 { /* DHCOM SPI2 */
+	/*
+	 * Special hardware required which uses the pins from enet 2. If you
+	 * want to enable this in the board device tree file, you also need to
+	 * disable enet 2.
+	 */
+	cs-gpios = <&gpio2 15 GPIO_ACTIVE_LOW>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi4>;
+	status = "disabled";
+};
+
+&fec1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet1>;
+	phy-mode = "rmii";
+	phy-handle = <&eth_phy0>;
+	status = "okay";
+};
+
+&fec2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet2>;
+	phy-mode = "rmii";
+	phy-handle = <&eth_phy1>;
+	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		eth_phy0: ethernet-phy@0 { /* SMSC LAN8710Ai */
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_ethphy0 &pinctrl_snvs_ethphy0>;
+			compatible = "ethernet-phy-id0007.c0f0",
+				     "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+			reset-gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <500>;
+			reset-deassert-us = <500>;
+			clocks = <&clks IMX6UL_CLK_ENET_REF>;
+			clock-names = "rmii-ref";
+			interrupt-parent = <&gpio5>;
+			interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
+			smsc,disable-energy-detect; /* Make plugin detection reliable */
+			max-speed = <100>;
+		};
+
+		eth_phy1: ethernet-phy@1 { /* SMSC LAN8710Ai */
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_ethphy1 &pinctrl_snvs_ethphy1>;
+			compatible = "ethernet-phy-id0007.c0f0",
+				     "ethernet-phy-ieee802.3-c22";
+			reg = <1>;
+			reset-gpios = <&gpio3 24 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <500>;
+			reset-deassert-us = <500>;
+			clocks = <&clks IMX6UL_CLK_ENET2_REF>;
+			clock-names = "rmii-ref";
+			interrupt-parent = <&gpio5>;
+			interrupts = <6 IRQ_TYPE_LEVEL_LOW>;
+			smsc,disable-energy-detect; /* Make plugin detection reliable */
+			max-speed = <100>;
+		};
+	};
+};
+
+&gpio1 {		/* 0      1      2      3      4      5      6      7  */
+	gpio-line-names =  ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 8      9      10     11     12     13     14     15 */
+			   ""   , ""   , ""   , "INT", ""   , ""   , ""   , ""   ,
+			/* 16     17     18     19     20     21     22     23 */
+			   ""   , ""   , "I"  , ""   , ""   , ""   , ""   , ""   ,
+			/* 24     25     26     27     28     29     30     31 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ;
+};
+
+&gpio2 {		/* 0      1      2      3      4      5      6      7  */
+	gpio-line-names =  ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 8      9      10     11     12     13     14     15 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 16     17     18     19     20     21     22     23 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 24     25     26     27     28     29     30     31 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ;
+};
+
+&gpio3 {		/* 0      1      2      3      4      5      6      7  */
+	gpio-line-names =  ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 8      9      10     11     12     13     14     15 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 16     17     18     19     20     21     22     23 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 24     25     26     27     28     29     30     31 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ;
+};
+
+&gpio4 {		/* 0      1      2      3      4      5      6      7  */
+	gpio-line-names =  ""   , ""   , ""   , ""   , ""   , ""   , "",    ""   ,
+			/* 8      9      10     11     12     13     14     15 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 16     17     18     19     20     21     22     23 */
+			   ""   , "L"  , "K"  , "M"  , "J"  , "U"  , "T"  , "S"  ,
+			/* 24     25     26     27     28     29     30     31 */
+			   "R"  , "Q"  , "P"  , "O"  , "N"  , ""   , ""   , ""   ;
+};
+
+&gpio5 {		/* 0      1      2      3      4      5      6      7  */
+	gpio-line-names =  "A"  , "B"  , "C"  , "D"  , "E"  , ""   , ""   , "F"  ,
+			/* 8      9      10     11     12     13     14     15 */
+			   "G"  , "H"  , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 16     17     18     19     20     21     22     23 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ,
+			/* 24     25     26     27     28     29     30     31 */
+			   ""   , ""   , ""   , ""   , ""   , ""   , ""   , ""   ;
+};
+
+&i2c1 { /* DHCOM I2C2 */
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_i2c1>;
+	pinctrl-1 = <&pinctrl_i2c1_gpio>;
+	scl-gpios = <&gpio1 28 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	sda-gpios = <&gpio1 29 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	clock_frequency = <100000>;
+	status = "okay";
+
+	rtc_i2c: rtc@32 {
+		compatible = "microcrystal,rv8803";
+		reg = <0x32>;
+	};
+
+	mac-eeprom@50 { /* Microchip 24AA025E48T-I/OT containing MAC for enet1 */
+		compatible = "atmel,24c02";
+		reg = <0x50>;
+		pagesize = <16>;
+	};
+
+	adc@51 { /* TI ADC101C027 */
+		compatible = "ti,adc101c";
+		reg = <0x51>;
+		vref-supply = <&reg_ext_3v3_ref>;
+	};
+
+	adc@52 { /* TI ADC101C027 */
+		compatible = "ti,adc101c";
+		reg = <0x52>;
+		vref-supply = <&reg_ext_3v3_ref>;
+	};
+
+	mac-eeprom@53 { /* Microchip 24AA025E48T-I/OT containing MAC for enet2 */
+		compatible = "atmel,24c02";
+		reg = <0x53>;
+		pagesize = <16>;
+	};
+
+	pmic@58 {
+		compatible = "dlg,da9061";
+		reg = <0x58>;
+	/* Currently no irq gpio is defined
+		interrupt-parent = <&gpioX>;
+		interrupts = <XX IRQ_TYPE_LEVEL_LOW>;
+		interrupt-controller; */
+
+		watchdog {
+			compatible = "dlg,da9061-watchdog", "dlg,da9062-watchdog";
+			wakeup-from-powerdown;
+			kernel-monitoring-enabled;
+		};
+
+	/* TODO: Putting into operation
+		regulators {
+			vdd_soc_in_1v4: buck1 {
+				regulator-name = "vdd_soc_in_1v4";
+				regulator-min-microvolt = <730000>;
+				regulator-max-microvolt = <1380000>;
+				regulator-always-on;
+			};
+
+			vcc_3v3: buck2 {
+				regulator-name = "vcc_3v3";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vcc_ddr_1v35: buck3 {
+				regulator-name = "vcc_ddr_1v35";
+				regulator-min-microvolt = <1350000>;
+				regulator-max-microvolt = <1350000>;
+				regulator-always-on;
+			};
+
+			vcc_2v5: ldo1 {
+				regulator-name = "vcc_2v5";
+				regulator-min-microvolt = <2500000>;
+				regulator-max-microvolt = <2500000>;
+				regulator-always-on;
+			};
+
+			vdd_snvs_in_3v3: ldo2 {
+				regulator-name = "vdd_snvs_in_3v3";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vcc_1v8: ldo3 {
+				regulator-name = "vcc_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			vcc_1v2: ldo4 {
+				regulator-name = "vcc_1v2";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+			};
+		}; */
+	};
+};
+
+&i2c2 { /* DHCOM I2C1 */
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_i2c2>;
+	pinctrl-1 = <&pinctrl_i2c2_gpio>;
+	scl-gpios = <&gpio1 30 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	sda-gpios = <&gpio1 31 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	clock_frequency = <100000>;
+	status = "okay";
+};
+
+&lcdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lcdif>;
+	status = "disabled"; /* Should be actived in a dt layer above */
+};
+
+&ocotp {
+	read-only; /* Don't get write access by default */
+};
+
+&pwm1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm1>;
+	#pwm-cells = <3>;
+	status = "disabled"; /* Should be actived in a dt layer above */
+};
+
+&tsc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_tsc>;
+	xnur-gpio = <&gpio1 3 GPIO_ACTIVE_LOW>;
+	measure-delay-time = <0xffff>;
+	pre-charge-time = <0xfff>;
+	touchscreen-average-samples = <32>;
+	status = "disabled"; /* Should be actived in a dt layer above */
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1>;
+	status = "okay";
+};
+
+&uart2 { /* DHCOM UART2 or BT on LGA */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart2>;
+	uart-has-rtscts;
+	status = "okay";
+};
+
+&uart6 { /* DHCOM UART2 (alternative) */
+	/*
+	 * Special hardware required which uses GPIO pins for DHCOM UART2. If
+	 * you want to enable this in the board device tree file, you also need
+	 * to disable the muxing of the pins to GPIO J/K/L/M.
+	 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart6>;
+	uart-has-rtscts;
+	status = "disabled";
+};
+
+&usbotg1 {
+	vbus-supply = <&reg_usb_otg1_vbus>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usbotg1>;
+	disable-over-current;
+	dr_mode = "otg";
+	srp-disable;
+	hnp-disable;
+	adp-disable;
+	status = "okay";
+};
+
+&usbotg2 {
+	vbus-supply = <&reg_usb_otg2_vbus>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usbotg2>;
+	disable-over-current;
+	dr_mode = "host";
+	tpl-support;
+	status = "okay";
+};
+
+&usbphy1 {
+	fsl,tx-d-cal = <106>;
+};
+
+&usbphy2 {
+	fsl,tx-d-cal = <106>;
+};
+
+&usdhc1 { /* WiFi on LGA */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc1_wifi>;
+	bus-width = <4>;
+	no-1-8-v;
+	non-removable;
+	mmc-pwrseq = <&usdhc1_pwrseq>;
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	brcmf: wifi@1 {
+		compatible = "brcm,bcm4329-fmac";
+		reg = <1>;
+	};
+};
+
+&usdhc2 { /* eMMC (on module) */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc2>;
+	non-removable;
+	bus-width = <8>;
+	no-1-8-v;
+	keep-power-in-suspend;
+	status = "okay";
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_dhcom>;
+
+	pinctrl_hog_dhcom: hog-dhcom-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0x4001b0b0 /* SPI_BOOT_FLASH_EN */
+		>;
+	};
+
+	pinctrl_ecspi1: ecspi1-grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA23__ECSPI1_MISO	0x100b1
+			MX6UL_PAD_LCD_DATA22__ECSPI1_MOSI	0x100b1
+			MX6UL_PAD_LCD_DATA20__ECSPI1_SCLK	0x100b1
+			MX6UL_PAD_LCD_DATA21__GPIO3_IO26	0x1b0b0 /* SS0 */
+		>;
+	};
+
+	pinctrl_ecspi4: ecspi4-grp {
+		fsl,pins = <
+			MX6UL_PAD_ENET2_TX_CLK__ECSPI4_MISO	0x100b1
+			MX6UL_PAD_ENET2_TX_EN__ECSPI4_MOSI	0x100b1
+			MX6UL_PAD_ENET2_TX_DATA1__ECSPI4_SCLK	0x100b1
+			MX6UL_PAD_ENET2_RX_ER__GPIO2_IO15	0x1b0b0 /* SS0 */
+		>;
+	};
+
+	pinctrl_enet1: enet1-grp {
+		fsl,pins = <
+			/* enet1 uses MDIO bus from enet2 */
+			MX6UL_PAD_ENET1_RX_EN__ENET1_RX_EN	0x1b0b0
+			MX6UL_PAD_ENET1_RX_ER__ENET1_RX_ER	0x1b0b0
+			MX6UL_PAD_ENET1_RX_DATA0__ENET1_RDATA00	0x1b0b0
+			MX6UL_PAD_ENET1_RX_DATA1__ENET1_RDATA01	0x1b0b0
+			MX6UL_PAD_ENET1_TX_EN__ENET1_TX_EN	0x1b010
+			MX6UL_PAD_ENET1_TX_DATA0__ENET1_TDATA00	0x1b010
+			MX6UL_PAD_ENET1_TX_DATA1__ENET1_TDATA01	0x1b010
+			MX6UL_PAD_ENET1_TX_CLK__ENET1_REF_CLK1	0x4001b010
+		>;
+	};
+
+	pinctrl_enet2: enet2-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO07__ENET2_MDC		0x1b0b0
+			MX6UL_PAD_GPIO1_IO06__ENET2_MDIO	0x1b0b0
+			MX6UL_PAD_ENET2_RX_EN__ENET2_RX_EN	0x1b0b0
+			MX6UL_PAD_ENET2_RX_ER__ENET2_RX_ER	0x1b0b0
+			MX6UL_PAD_ENET2_RX_DATA0__ENET2_RDATA00	0x1b0b0
+			MX6UL_PAD_ENET2_RX_DATA1__ENET2_RDATA01	0x1b0b0
+			MX6UL_PAD_ENET2_TX_EN__ENET2_TX_EN	0x1b010
+			MX6UL_PAD_ENET2_TX_DATA0__ENET2_TDATA00	0x1b010
+			MX6UL_PAD_ENET2_TX_DATA1__ENET2_TDATA01	0x1b010
+			MX6UL_PAD_ENET2_TX_CLK__ENET2_REF_CLK2	0x4001b010
+		>;
+	};
+
+	pinctrl_ethphy0: ethphy0-grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA18__GPIO3_IO23	0xb0 /* SMSC phy0 reset */
+		>;
+	};
+
+	pinctrl_ethphy1: ethphy1-grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA19__GPIO3_IO24	0xb0 /* SMSC phy1 reset */
+		>;
+	};
+
+	pinctrl_flexcan1: flexcan1-grp{
+		fsl,pins = <
+			MX6UL_PAD_UART3_RTS_B__FLEXCAN1_RX	0x1b020
+			MX6UL_PAD_UART3_CTS_B__FLEXCAN1_TX	0x1b020
+		>;
+	};
+
+	pinctrl_flexcan2: flexcan2-grp{
+		fsl,pins = <
+			MX6UL_PAD_UART2_RTS_B__FLEXCAN2_RX	0x1b020
+			MX6UL_PAD_UART2_CTS_B__FLEXCAN2_TX	0x1b020
+		>;
+	};
+
+	pinctrl_i2c1: i2c1-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART4_TX_DATA__I2C1_SCL	0x4001b8b0
+			MX6UL_PAD_UART4_RX_DATA__I2C1_SDA	0x4001b8b0
+		>;
+	};
+
+	pinctrl_i2c1_gpio: i2c1-gpio-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART4_TX_DATA__GPIO1_IO28	0x4001b8b0
+			MX6UL_PAD_UART4_RX_DATA__GPIO1_IO29	0x4001b8b0
+		>;
+	};
+
+	pinctrl_i2c2: i2c2-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART5_TX_DATA__I2C2_SCL	0x4001b8b0
+			MX6UL_PAD_UART5_RX_DATA__I2C2_SDA	0x4001b8b0
+		>;
+	};
+
+	pinctrl_i2c2_gpio: i2c2-gpio-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART5_TX_DATA__GPIO1_IO30	0x4001b8b0
+			MX6UL_PAD_UART5_RX_DATA__GPIO1_IO31	0x4001b8b0
+		>;
+	};
+
+	pinctrl_lcdif: lcdif-grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_CLK__LCDIF_CLK		0x79
+			MX6UL_PAD_LCD_ENABLE__LCDIF_ENABLE	0x79
+			MX6UL_PAD_LCD_HSYNC__LCDIF_HSYNC	0x79
+			MX6UL_PAD_LCD_VSYNC__LCDIF_VSYNC	0x79
+			MX6UL_PAD_LCD_DATA00__LCDIF_DATA00	0x79
+			MX6UL_PAD_LCD_DATA01__LCDIF_DATA01	0x79
+			MX6UL_PAD_LCD_DATA02__LCDIF_DATA02	0x79
+			MX6UL_PAD_LCD_DATA03__LCDIF_DATA03	0x79
+			MX6UL_PAD_LCD_DATA04__LCDIF_DATA04	0x79
+			MX6UL_PAD_LCD_DATA05__LCDIF_DATA05	0x79
+			MX6UL_PAD_LCD_DATA06__LCDIF_DATA06	0x79
+			MX6UL_PAD_LCD_DATA07__LCDIF_DATA07	0x79
+			MX6UL_PAD_LCD_DATA08__LCDIF_DATA08	0x79
+			MX6UL_PAD_LCD_DATA09__LCDIF_DATA09	0x79
+			MX6UL_PAD_LCD_DATA10__LCDIF_DATA10	0x79
+			MX6UL_PAD_LCD_DATA11__LCDIF_DATA11	0x79
+			MX6UL_PAD_LCD_DATA12__LCDIF_DATA12	0x79
+			MX6UL_PAD_LCD_DATA13__LCDIF_DATA13	0x79
+			MX6UL_PAD_LCD_DATA14__LCDIF_DATA14	0x79
+			MX6UL_PAD_LCD_DATA15__LCDIF_DATA15	0x79
+			MX6UL_PAD_LCD_DATA16__LCDIF_DATA16	0x79
+			MX6UL_PAD_LCD_DATA17__LCDIF_DATA17	0x79
+		>;
+	};
+
+	pinctrl_pwm1: pwm1-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO08__PWM1_OUT		0x110b0
+		>;
+	};
+
+	pinctrl_tsc: tsc-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO01__GPIO1_IO01	0xb0
+			MX6UL_PAD_GPIO1_IO02__GPIO1_IO02	0xb0
+			MX6UL_PAD_GPIO1_IO03__GPIO1_IO03	0xb0
+			MX6UL_PAD_GPIO1_IO04__GPIO1_IO04	0xb0
+		>;
+	};
+
+	pinctrl_uart1: uart1-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_TX_DATA__UART1_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART1_RX_DATA__UART1_DCE_RX	0x1b0b1
+		>;
+	};
+
+	pinctrl_uart2: uart2-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART2_TX_DATA__UART2_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX	0x1b0b1
+			MX6UL_PAD_UART3_RX_DATA__UART2_DCE_RTS	0x1b0b1
+			MX6UL_PAD_UART3_TX_DATA__UART2_DCE_CTS	0x1b0b1
+		>;
+	};
+
+	pinctrl_uart6: uart6-grp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_MCLK__UART6_DCE_TX	0x1b0b1
+			MX6UL_PAD_CSI_PIXCLK__UART6_DCE_RX	0x1b0b1
+			MX6UL_PAD_CSI_VSYNC__UART6_DCE_RTS	0x1b0b1
+			MX6UL_PAD_CSI_HSYNC__UART6_DCE_CTS	0x1b0b1
+		>;
+	};
+
+	pinctrl_usbotg1: usbotg1-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO00__ANATOP_OTG1_ID	0x17059
+		>;
+	};
+
+	pinctrl_usbotg2: usbotg2-grp {
+		fsl,pins = <
+			MX6UL_PAD_GPIO1_IO05__GPIO1_IO05	0x120b0
+		>;
+	};
+
+	pinctrl_usdhc1_wifi: usdhc1-wifi-grp {
+		fsl,pins = <
+			MX6UL_PAD_SD1_CMD__USDHC1_CMD		0x1b0b0
+			MX6UL_PAD_SD1_CLK__USDHC1_CLK		0x10010
+			MX6UL_PAD_SD1_DATA0__USDHC1_DATA0	0x1b0b0
+			MX6UL_PAD_SD1_DATA1__USDHC1_DATA1	0x1b0b0
+			MX6UL_PAD_SD1_DATA2__USDHC1_DATA2	0x1b0b0
+			MX6UL_PAD_SD1_DATA3__USDHC1_DATA3	0x1b0b0
+		>;
+	};
+
+	pinctrl_usdhc2: usdhc2-grp {
+		fsl,pins = <
+			MX6UL_PAD_NAND_RE_B__USDHC2_CLK		0x10069
+			MX6UL_PAD_NAND_WE_B__USDHC2_CMD		0x17059
+			MX6UL_PAD_NAND_DATA00__USDHC2_DATA0	0x17059
+			MX6UL_PAD_NAND_DATA01__USDHC2_DATA1	0x17059
+			MX6UL_PAD_NAND_DATA02__USDHC2_DATA2	0x17059
+			MX6UL_PAD_NAND_DATA03__USDHC2_DATA3	0x17059
+			MX6UL_PAD_NAND_DATA04__USDHC2_DATA4	0x17059
+			MX6UL_PAD_NAND_DATA05__USDHC2_DATA5	0x17059
+			MX6UL_PAD_NAND_DATA06__USDHC2_DATA6	0x17059
+			MX6UL_PAD_NAND_DATA07__USDHC2_DATA7	0x17059
+			MX6UL_PAD_NAND_ALE__USDHC2_RESET_B	0x17059 /* SD2 RESET */
+		>;
+	};
+};
+
+&iomuxc_snvs {
+	pinctrl_snvs_ethphy0: snvs-ethphy0-grp {
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER5__GPIO5_IO05	0xb1 /* SMSC phy INT */
+		>;
+	};
+
+	pinctrl_snvs_ethphy1: snvs-ethphy1-grp {
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER6__GPIO5_IO06	0xb1 /* SMSC phy INT */
+		>;
+	};
+};
