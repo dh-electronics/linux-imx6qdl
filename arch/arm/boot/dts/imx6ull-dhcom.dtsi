@@ -388,6 +388,18 @@
 	status = "okay";
 };
 
+&uart6 { /* DHCOM UART2 (alternative) */
+	/*
+	 * Special hardware required which uses GPIO pins for DHCOM UART2. If
+	 * you want to enable this in the board device tree file, you also need
+	 * to disable the muxing of the pins to GPIO J/K/L/M.
+	 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart6>;
+	uart-has-rtscts;
+	status = "disabled";
+};
+
 &usbotg1 {
 	vbus-supply = <&reg_usb_otg1_vbus>;
 	pinctrl-names = "default";
@@ -602,6 +614,15 @@
 			MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX	0x1b0b1
 			MX6UL_PAD_UART3_RX_DATA__UART2_DCE_RTS	0x1b0b1
 			MX6UL_PAD_UART3_TX_DATA__UART2_DCE_CTS	0x1b0b1
+		>;
+	};
+
+	pinctrl_uart6: uart6-grp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_MCLK__UART6_DCE_TX	0x1b0b1
+			MX6UL_PAD_CSI_PIXCLK__UART6_DCE_RX	0x1b0b1
+			MX6UL_PAD_CSI_VSYNC__UART6_DCE_RTS	0x1b0b1
+			MX6UL_PAD_CSI_HSYNC__UART6_DCE_CTS	0x1b0b1
 		>;
 	};
 
