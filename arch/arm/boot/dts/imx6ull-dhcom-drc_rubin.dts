@@ -40,9 +40,9 @@
 };
 
 &i2c2 { /* DHCOM I2C1 */
-	eeprom@56 { /* ST M24C32-W, addresses 0x56 and 0x57 */
+	eeprom@57 { /* ST M24C32-W, addresses 0x57 */
 		compatible = "st,24c32";
-		reg = <0x56>;
+		reg = <0x57>;
 		pagesize = <32>;
 		};
 };
