@@ -61,6 +61,21 @@
 	status = "disabled";
 };
 
+&gpio4 {
+	/*
+	 * NOTE: On DRC02, the RS485_RX_En is controlled by a separate
+	 * GPIO line, however the i.MX6ULL UART driver assumes RX happens
+	 * during TX anyway and that it only controls drive enable DE
+	 * line. Hence, the RX is always enabled here.
+	 */
+	rs485-rx-en {
+		gpio-hog;
+		gpios = <25 GPIO_ACTIVE_HIGH>; /* GPIO Q */
+		output-low;
+		line-name = "rs485-rx-en";
+	};
+};
+
 &i2c1 { /* DHCOM I2C2 */
 	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
 		compatible = "atmel,24c04";
@@ -73,7 +88,9 @@
 };
 
 &uart2 { /* Use UART as RS485 */
+	/delete-property/ uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
+	rts-gpios = <&gpio4 26 GPIO_ACTIVE_HIGH>; /* GPIO P */
 };
 
 &iomuxc {
@@ -90,8 +107,8 @@
 #ifndef CFG_BOOTFLASH
 			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N -> Extension connector (XLON U10R2, MBUS, ...) */
 			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O -> Extension connector (XLON U10R2, MBUS, ...) */
-			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P -> Prepared for rs485 rts */
-			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q -> Prepared for rs485 rxen */
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P -> RS485_TX_En */
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q -> RS485_RX_En */
 			MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x400120b0 /* GPIO R -> Not connected */
 			MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x400120b0 /* GPIO S -> Not connected */
 			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x400120b0 /* GPIO T -> Not connected */
