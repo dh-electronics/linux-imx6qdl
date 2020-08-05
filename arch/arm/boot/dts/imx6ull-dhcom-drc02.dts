@@ -87,6 +87,12 @@
 &i2c2 { /* DHCOM I2C1 */
 };
 
+&uart1 {
+	/delete-property/ uart-has-rtscts;
+	rts-gpios = <&gpio1 18 GPIO_ACTIVE_HIGH>; /* GPIO I */
+	cts-gpios = <&gpio4 19 GPIO_ACTIVE_HIGH>; /* GPIO M */
+};
+
 &uart2 { /* Use UART as RS485 */
 	/delete-property/ uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
@@ -99,11 +105,11 @@
 
 	pinctrl_hog_drc02: hog-drc02-grp {
 		fsl,pins = <
-			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> Prepared for UART1 RTS */
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x400120b0 /* GPIO I -> UART1_RTS */
 			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J -> Code_HW_2 */
 			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x400120b0 /* GPIO K -> Code_HW_1 */
 			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L -> Code_HW_0 */
-			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19		0x400120b0 /* GPIO M -> Prepared for UART1 CTS */
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19		0x400120b0 /* GPIO M -> UART1_CTS */
 #ifndef CFG_BOOTFLASH
 			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N -> Extension connector (XLON U10R2, MBUS, ...) */
 			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O -> Extension connector (XLON U10R2, MBUS, ...) */
