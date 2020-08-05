@@ -55,10 +55,10 @@
 };
 
 &i2c2 { /* DHCOM I2C1 */
-	eeprom@56 { /* Atmel AT24HC04B, addresses 0x56 and 0x57 */
-		compatible = "atmel,24c04";
-		reg = <0x56>;
-		pagesize = <16>;
+	eeprom@57 { /* ST M24C32-W, addresses 0x57 */
+		compatible = "st,24c32";
+		reg = <0x57>;
+		pagesize = <32>;
 	};
 };
 
