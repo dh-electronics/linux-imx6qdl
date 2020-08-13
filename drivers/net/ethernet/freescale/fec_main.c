@@ -3383,6 +3383,79 @@ static int fec_enet_get_irq_cnt(struct platform_device *pdev)
 	return irq_cnt;
 }
 
+static int fec_reset_other_phy_once(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *enet_node;
+	int reset_gpio;
+	int phy_reset_duration;
+	int phy_post_delay;
+	int reset_active_high;
+	int err;
+
+	/* Check of enable property phy-reset-additional-enet-iface */
+	enet_node = of_parse_phandle(np, "phy-reset-additional-enet-iface", 0);
+	if (!enet_node)
+		return 0;
+
+	/* Most DT files do not specify the correct polarity
+	 * of the phy-reset GPIO.
+	 * So use this special property to signal the actual
+	 * signal polarity.
+	 */
+	reset_gpio = of_get_named_gpio(enet_node, "phy-reset-gpios", 0);
+	if (reset_gpio == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
+	if (!gpio_is_valid(reset_gpio))
+		return 0;
+
+	reset_active_high = of_property_read_bool(enet_node,
+						  "phy-reset-active-high");
+
+	err = gpio_request_one(reset_gpio,
+			       reset_active_high ?
+			       GPIOF_OUT_INIT_LOW : GPIOF_OUT_INIT_HIGH,
+			       "phy-reset");
+	if (err) {
+		dev_err(&pdev->dev, "failed to get phy-reset-gpios: %d\n", err);
+		return err;
+	}
+
+	err = of_property_read_u32(enet_node, "phy-reset-duration",
+				   &phy_reset_duration);
+	/* A sane reset duration should not be longer than 1s */
+	if (err || phy_reset_duration > 1000)
+		phy_reset_duration = 1;
+
+	err = of_property_read_u32(enet_node, "phy-reset-post-delay",
+				   &phy_post_delay);
+	/* valid post reset delay should be less than 1s */
+	if (err)
+		phy_post_delay = 0;
+	else if (phy_post_delay > 1000)
+		return -EINVAL;
+
+	gpio_set_value_cansleep(reset_gpio, reset_active_high);
+
+	if (phy_reset_duration > 20)
+		msleep(phy_reset_duration);
+	else
+		usleep_range(phy_reset_duration * 1000,
+			     phy_reset_duration * 1000 + 1000);
+
+	gpio_set_value_cansleep(reset_gpio, !reset_active_high);
+
+	if (phy_post_delay > 20)
+		msleep(phy_post_delay);
+	else
+		usleep_range(phy_post_delay * 1000,
+			     phy_post_delay * 1000 + 1000);
+
+	gpio_free(reset_gpio);
+
+	return 0;
+}
+
 static int
 fec_probe(struct platform_device *pdev)
 {
@@ -3545,6 +3618,9 @@ fec_probe(struct platform_device *pdev)
 	if (ret)
 		goto failed_reset;
 	fec_reset_phy(fep);
+	ret = fec_reset_other_phy_once(pdev);
+	if (ret)
+		goto failed_reset;
 
 	irq_cnt = fec_enet_get_irq_cnt(pdev);
 	if (fep->bufdesc_ex)
