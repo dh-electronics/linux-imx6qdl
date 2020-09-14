@@ -132,10 +132,9 @@
 			clocks = <&clks IMX6UL_CLK_ENET_REF>;
 			clock-names = "rmii-ref";
 			interrupt-parent = <&gpio5>;
-			interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+			interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
 			smsc,disable-energy-detect; /* Make plugin detection reliable */
 			max-speed = <100>;
-			status = "okay";
 		};
 	};
 };
