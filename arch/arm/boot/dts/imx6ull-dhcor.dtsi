@@ -17,6 +17,7 @@
 	};
 
 	memory@80000000 { /* Appropriate memory size will be filled by u-boot */
+		device_type = "memory";
 		reg = <0x80000000 0>;
 	};
 
