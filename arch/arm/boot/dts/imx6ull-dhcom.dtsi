@@ -13,6 +13,10 @@
 		/delete-property/ mmc0; /* Avoid double definitions */
 		/delete-property/ mmc1;
 		mmc2 = &usdhc2; /* eMMC (on module) should be mmc2 */
+		spi0 = &ecspi1; /* DHCOM SPI1 */
+		spi1 = &ecspi4; /* DHCOM SPI2 */
+		/delete-property/ spi2; /* Avoid double definitions */
+		/delete-property/ spi3;
 	};
 
 	chosen {
