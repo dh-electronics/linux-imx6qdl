@@ -938,6 +938,32 @@ static const struct panel_desc dataimage_scf0700c48ggu18 = {
 	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_POSEDGE,
 };
 
+static const struct drm_display_mode dataimage_fg040346dsswbg03_mode = {
+	.clock = 11100,
+	.hdisplay = 480,
+	.hsync_start = 480 + 42,
+	.hsync_end = 480 + 42 + 64,
+	.htotal = 480 + 42 + 64 + 86,
+	.vdisplay = 272,
+	.vsync_start = 272 + 10,
+	.vsync_end = 272 + 10 + 2,
+	.vtotal = 272 + 10 + 2 + 33,
+	.vrefresh = 60,
+	.flags = DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC,
+};
+
+static const struct panel_desc dataimage_fg040346dsswbg03 = {
+	.modes = &dataimage_fg040346dsswbg03_mode,
+	.num_modes = 1,
+	.bpc = 6,
+	.size = {
+		.width = 95,
+		.height = 54,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
+	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_POSEDGE,
+};
+
 static const struct display_timing dlc_dlc0700yzg_1_timing = {
 	.pixelclock = { 45000000, 51200000, 57000000 },
 	.hactive = { 1024, 1024, 1024 },
@@ -2393,6 +2419,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "dataimage,scf0700c48ggu18",
 		.data = &dataimage_scf0700c48ggu18,
+	}, {
+		.compatible = "dataimage,fg040346dsswbg03",
+		.data = &dataimage_fg040346dsswbg03,
 	}, {
 		.compatible = "dlc,dlc0700yzg-1",
 		.data = &dlc_dlc0700yzg_1,
