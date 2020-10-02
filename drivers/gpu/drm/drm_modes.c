@@ -1811,3 +1811,146 @@ bool drm_mode_is_420(const struct drm_display_info *display,
 		drm_mode_is_420_also(display, mode);
 }
 EXPORT_SYMBOL(drm_mode_is_420);
+
+/**
+ * drm_mode_show_timings_pref_mode - Showing display timings of perferred mode
+ *
+ * @connector: connector containing perferred mode
+ *
+ */
+void drm_mode_show_timings_pref_mode(struct drm_connector *connector)
+{
+	struct drm_display_mode *pmode;
+	bool flag_counter;
+
+	list_for_each_entry(pmode, &connector->probed_modes, head)
+		if (pmode->type & DRM_MODE_TYPE_PREFERRED) {
+			printk("Preferred display mode is\n");
+			printk("  pixelclock    = %lu Hz\n",
+			       (unsigned long)pmode->clock * 1000 );
+			printk("  hactive       = %d px\n", pmode->hdisplay );
+			printk("  vactive       = %d px\n", pmode->vdisplay );
+			printk("  hfront_porch  = %d px\n",
+			       pmode->hsync_start - pmode->hdisplay);
+			printk("  hback_porch   = %d px\n",
+			       pmode->htotal - pmode->hsync_end);
+			printk("  hsync_len     = %d px\n",
+			       pmode->hsync_end - pmode->hsync_start);
+			printk("  vfront_porch  = %d lines\n",
+			       pmode->vsync_start - pmode->vdisplay);
+			printk("  vback_porch   = %d lines\n",
+			       pmode->vtotal - pmode->vsync_end);
+			printk("  vsync_len     = %d lines\n",
+			       pmode->vsync_end - pmode->vsync_start);
+
+			printk(KERN_CONT "  flags         = 0x%04X",
+			       pmode->flags);
+			if (pmode->flags != 0) {
+				printk(KERN_CONT " (");
+				flag_counter = 0;
+				if (pmode->flags & DRM_MODE_FLAG_PHSYNC)
+					printk(KERN_CONT "%sPHSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_NHSYNC)
+					printk(KERN_CONT "%sNHSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_PVSYNC)
+					printk(KERN_CONT "%sPVSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_NVSYNC)
+					printk(KERN_CONT "%sNVSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_INTERLACE)
+					printk(KERN_CONT "%sINTERLACE",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_DBLSCAN)
+					printk(KERN_CONT "%sDBLSCAN",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_CSYNC)
+					printk(KERN_CONT "%sCSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_PCSYNC)
+					printk(KERN_CONT "%sPCSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_NCSYNC)
+					printk(KERN_CONT "%sNCSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_HSKEW)
+					printk(KERN_CONT "%sHSKEW",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_BCAST)
+					printk(KERN_CONT "%sBCAST",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_PIXMUX)
+					printk(KERN_CONT "%sPIXMUX",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_DBLCLK)
+					printk(KERN_CONT "%sDBLCLK",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_CLKDIV2)
+					printk(KERN_CONT "%sCLKDIV2",
+					       flag_counter++ ? "|" : "");
+				printk(KERN_CONT ")");
+			}
+			printk(KERN_CONT "\n");
+		}
+
+	printk(KERN_CONT "  bus_flags     = 0x%04X",
+	       connector->display_info.bus_flags );
+	if ( connector->display_info.bus_flags != 0 ) {
+		printk(KERN_CONT " (");
+		flag_counter = 0;
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DE_LOW)
+			printk(KERN_CONT "%sDE_LOW",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DE_HIGH)
+			printk(KERN_CONT "%sDE_HIGH",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_PIXDATA_POSEDGE)
+			printk(KERN_CONT "%sPIXDATA_POSEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_PIXDATA_NEGEDGE)
+			printk(KERN_CONT "%sPIXDATA_NEGEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DATA_MSB_TO_LSB)
+			printk(KERN_CONT "%sDATA_MSB_TO_LSB",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DATA_LSB_TO_MSB)
+			printk(KERN_CONT "%sDATA_LSB_TO_MSB",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_SYNC_POSEDGE)
+			printk(KERN_CONT "%sSYNC_POSEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_SYNC_NEGEDGE)
+			printk(KERN_CONT "%sSYNC_NEGEDGE",
+			       flag_counter++ ? "|" : "");
+		printk(KERN_CONT ")");
+	}
+	printk(KERN_CONT "\n");
+	if (connector->display_info.bus_formats) {
+		printk(KERN_CONT "  bus_format    = 0x%04X",
+		       *((u32*)connector->display_info.bus_formats));
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB666_1X18)
+			printk(KERN_CONT " (RGB666_1X18)");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB666_1X7X3_SPWG)
+			printk(KERN_CONT " (jeida-18, RGB666_1X7X3_SPWG)");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_1X7X4_JEIDA)
+			printk(KERN_CONT " (jeida-24, RGB888_1X7X4_JEIDA)");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_1X7X4_SPWG)
+			printk(KERN_CONT " (vesa-24, RGB888_1X7X4_SPWG)");
+		printk(KERN_CONT "\n");
+	}
+}
+EXPORT_SYMBOL(drm_mode_show_timings_pref_mode);
