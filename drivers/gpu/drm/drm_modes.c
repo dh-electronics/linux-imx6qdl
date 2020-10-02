@@ -35,6 +35,7 @@
 #include <linux/list_sort.h>
 #include <linux/export.h>
 #include <linux/fb.h>
+#include <linux/media-bus-format.h>
 
 #include <video/of_display_timing.h>
 #include <video/of_videomode.h>
@@ -47,6 +48,9 @@
 #include <drm/drm_print.h>
 
 #include "drm_crtc_internal.h"
+
+static bool show_panel_timings = false;
+core_param(show_panel_timings, show_panel_timings, bool, S_IRUGO);
 
 /**
  * drm_mode_debug_printmodeline - print a mode to dmesg
@@ -2146,3 +2150,238 @@ bool drm_mode_is_420(const struct drm_display_info *display,
 		drm_mode_is_420_also(display, mode);
 }
 EXPORT_SYMBOL(drm_mode_is_420);
+
+/**
+ * drm_mode_show_timings_pref_mode - Showing display timings of perferred mode
+ *
+ * @connector: connector containing perferred mode
+ *
+ */
+void drm_mode_show_timings_pref_mode(struct drm_connector *connector)
+{
+	struct drm_display_mode *pmode;
+	int flag_counter;
+
+	if (!show_panel_timings)
+		return;
+
+	list_for_each_entry(pmode, &connector->probed_modes, head)
+		if (pmode->type & DRM_MODE_TYPE_PREFERRED) {
+			printk("Preferred display mode is\n");
+			printk("  pixelclock    = %lu Hz\n",
+			       (unsigned long)pmode->clock * 1000 );
+			printk("  hactive       = %d px\n", pmode->hdisplay );
+			printk("  vactive       = %d px\n", pmode->vdisplay );
+			printk("  hfront_porch  = %d px\n",
+			       pmode->hsync_start - pmode->hdisplay);
+			printk("  hback_porch   = %d px\n",
+			       pmode->htotal - pmode->hsync_end);
+			printk("  hsync_len     = %d px\n",
+			       pmode->hsync_end - pmode->hsync_start);
+			printk("  vfront_porch  = %d lines\n",
+			       pmode->vsync_start - pmode->vdisplay);
+			printk("  vback_porch   = %d lines\n",
+			       pmode->vtotal - pmode->vsync_end);
+			printk("  vsync_len     = %d lines\n",
+			       pmode->vsync_end - pmode->vsync_start);
+
+			printk(KERN_CONT "  flags         = 0x%04X",
+			       pmode->flags);
+			if (pmode->flags != 0) {
+				printk(KERN_CONT " (");
+				flag_counter = 0;
+				if (pmode->flags & DRM_MODE_FLAG_PHSYNC)
+					printk(KERN_CONT "%sPHSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_NHSYNC)
+					printk(KERN_CONT "%sNHSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_PVSYNC)
+					printk(KERN_CONT "%sPVSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_NVSYNC)
+					printk(KERN_CONT "%sNVSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_INTERLACE)
+					printk(KERN_CONT "%sINTERLACE",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_DBLSCAN)
+					printk(KERN_CONT "%sDBLSCAN",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_CSYNC)
+					printk(KERN_CONT "%sCSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_PCSYNC)
+					printk(KERN_CONT "%sPCSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_NCSYNC)
+					printk(KERN_CONT "%sNCSYNC",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_HSKEW)
+					printk(KERN_CONT "%sHSKEW",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_BCAST)
+					printk(KERN_CONT "%sBCAST",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_PIXMUX)
+					printk(KERN_CONT "%sPIXMUX",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_DBLCLK)
+					printk(KERN_CONT "%sDBLCLK",
+					       flag_counter++ ? "|" : "");
+				if (pmode->flags & DRM_MODE_FLAG_CLKDIV2)
+					printk(KERN_CONT "%sCLKDIV2",
+					       flag_counter++ ? "|" : "");
+				printk(KERN_CONT ")");
+			}
+			printk(KERN_CONT "\n");
+		}
+
+	printk("  dimensions    = %dmm x %dmm\n",
+	       connector->display_info.width_mm,
+	       connector->display_info.height_mm);
+
+	printk(KERN_CONT "  bus_flags     = 0x%04X",
+	       connector->display_info.bus_flags );
+	if ( connector->display_info.bus_flags != 0 ) {
+		printk(KERN_CONT " (");
+		flag_counter = 0;
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DE_LOW)
+			printk(KERN_CONT "%sDE_LOW",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DE_HIGH)
+			printk(KERN_CONT "%sDE_HIGH",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE)
+			printk(KERN_CONT "%sPIXDATA_DRIVE_POSEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE)
+			printk(KERN_CONT "%sPIXDATA_DRIVE_NEGEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DATA_MSB_TO_LSB)
+			printk(KERN_CONT "%sDATA_MSB_TO_LSB",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_DATA_LSB_TO_MSB)
+			printk(KERN_CONT "%sDATA_LSB_TO_MSB",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_SYNC_DRIVE_POSEDGE)
+			printk(KERN_CONT "%sSYNC_DRIVE_POSEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_SYNC_DRIVE_NEGEDGE)
+			printk(KERN_CONT "%sSYNC_DRIVE_NEGEDGE",
+			       flag_counter++ ? "|" : "");
+		if (connector->display_info.bus_flags &
+					    DRM_BUS_FLAG_SHARP_SIGNALS)
+			printk(KERN_CONT "%sSHARP_SIGNALS",
+			       flag_counter++ ? "|" : "");
+		printk(KERN_CONT ")");
+	}
+	printk(KERN_CONT "\n");
+	if (connector->display_info.bus_formats) {
+		printk(KERN_CONT "  bus_format    = 0x%04X",
+		       *((u32*)connector->display_info.bus_formats));
+		if (*((u32*)connector->display_info.bus_formats) >= 0x1001 &&
+		    *((u32*)connector->display_info.bus_formats) <  0x2000)
+			printk(KERN_CONT " (RGB");
+		if (*((u32*)connector->display_info.bus_formats) >= 0x2001 &&
+		    *((u32*)connector->display_info.bus_formats) <  0x3000)
+			printk(KERN_CONT " (YUV");
+		if (*((u32*)connector->display_info.bus_formats) >= 0x3001 &&
+		    *((u32*)connector->display_info.bus_formats) <  0x4000)
+			printk(KERN_CONT " (Bayer");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB444_1X12)
+			printk(KERN_CONT ":RGB444_1X12");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB444_2X8_PADHI_BE)
+			printk(KERN_CONT ":RGB444_2X8_PADHI_BE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB444_2X8_PADHI_LE)
+			printk(KERN_CONT ":RGB444_2X8_PADHI_LE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB555_2X8_PADHI_BE)
+			printk(KERN_CONT ":RGB555_2X8_PADHI_BE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB555_2X8_PADHI_LE)
+			printk(KERN_CONT ":RGB555_2X8_PADHI_LE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB565_1X16)
+			printk(KERN_CONT ":RGB565_1X16");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_BGR565_2X8_BE)
+			printk(KERN_CONT ":BGR565_2X8_BE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_BGR565_2X8_LE)
+			printk(KERN_CONT ":BGR565_2X8_LE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB565_2X8_BE)
+			printk(KERN_CONT ":RGB565_2X8_BE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB565_2X8_LE)
+			printk(KERN_CONT ":RGB565_2X8_LE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB666_1X18)
+			printk(KERN_CONT ":RGB666_1X18");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RBG888_1X24)
+			printk(KERN_CONT ":RBG888_1X24");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB666_1X24_CPADHI)
+			printk(KERN_CONT ":RGB666_1X24_CPADHI");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB666_1X7X3_SPWG)
+			printk(KERN_CONT ":RGB666_1X7X3_SPWG [jeida-18]");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_BGR888_1X24)
+			printk(KERN_CONT ":BGR888_1X24");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_BGR888_3X8)
+			printk(KERN_CONT ":BGR888_3X8");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_GBR888_1X24)
+			printk(KERN_CONT ":GBR888_1X24");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_1X24)
+			printk(KERN_CONT ":RGB888_1X24");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_2X12_BE)
+			printk(KERN_CONT ":RGB888_2X12_BE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_2X12_LE)
+			printk(KERN_CONT ":RGB888_2X12_LE");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_3X8)
+			printk(KERN_CONT ":RGB888_3X8");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_1X7X4_SPWG)
+			printk(KERN_CONT ":RGB888_1X7X4_SPWG [vesa-24]");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_1X7X4_JEIDA)
+			printk(KERN_CONT ":RGB888_1X7X4_JEIDA [jeida-24]");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_ARGB8888_1X32)
+			printk(KERN_CONT ":ARGB8888_1X32");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB888_1X32_PADHI)
+			printk(KERN_CONT ":RGB888_1X32_PADHI");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB101010_1X30)
+			printk(KERN_CONT ":RGB101010_1X30");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB121212_1X36)
+			printk(KERN_CONT ":RGB121212_1X36");
+		if (*((u32*)connector->display_info.bus_formats) ==
+		    MEDIA_BUS_FMT_RGB161616_1X48)
+			printk(KERN_CONT ":RGB161616_1X48");
+		printk(KERN_CONT ")\n");
+	}
+}
+EXPORT_SYMBOL(drm_mode_show_timings_pref_mode);
