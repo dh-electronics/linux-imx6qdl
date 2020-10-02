@@ -36,6 +36,9 @@
 #include <video/display_timing.h>
 #include <video/videomode.h>
 
+static bool show_timings = false;
+module_param(show_timings, bool, S_IRUGO);
+
 struct panel_desc {
 	const struct drm_display_mode *modes;
 	unsigned int num_modes;
@@ -261,6 +264,9 @@ static int panel_simple_get_modes(struct drm_panel *panel)
 
 	/* add hard-coded panel modes */
 	num += panel_simple_get_fixed_modes(p);
+
+	if (show_timings)
+		drm_mode_show_timings_pref_mode(panel->connector);
 
 	return num;
 }
