@@ -880,8 +880,8 @@
 				clocks = <&clks IMX6UL_CLK_ENET>,
 					 <&clks IMX6UL_CLK_ENET_AHB>,
 					 <&clks IMX6UL_CLK_ENET_PTP>,
-					 <&clks IMX6UL_CLK_ENET_REF>,
-					 <&clks IMX6UL_CLK_ENET_REF>;
+					 <&clks IMX6UL_CLK_ENET1_REF_125M>,
+					 <&clks IMX6UL_CLK_ENET1_REF_125M>;
 				clock-names = "ipg", "ahb", "ptp",
 					      "enet_clk_ref", "enet_out";
 				fsl,num-tx-queues = <1>;
