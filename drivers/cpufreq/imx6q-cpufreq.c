@@ -302,6 +302,7 @@ put_node:
 }
 
 #define OCOTP_CFG3_6UL_SPEED_696MHZ	0x2
+#define OCOTP_CFG3_6ULL_SPEED_528MHZ	0x1
 #define OCOTP_CFG3_6ULL_SPEED_792MHZ	0x2
 #define OCOTP_CFG3_6ULL_SPEED_900MHZ	0x3
 
@@ -346,6 +347,22 @@ static int imx6ul_opp_check_speed_grading(struct device *dev)
 	 */
 	val >>= OCOTP_CFG3_SPEED_SHIFT;
 	val &= 0x3;
+
+	if (of_machine_is_compatible("fsl,imx6ull")) {
+		if (of_property_read_bool(dev->of_node, "imx6ull-limit-cpu-792mhz")) {
+			if (val == OCOTP_CFG3_6ULL_SPEED_900MHZ) {
+				dev_info(dev, "Reduce the max cpu speed to 792MHz\n");
+				val = OCOTP_CFG3_6ULL_SPEED_792MHZ;
+			}
+		}
+		if (of_property_read_bool(dev->of_node, "imx6ull-limit-cpu-528mhz")) {
+			if ((val == OCOTP_CFG3_6ULL_SPEED_900MHZ) ||
+			    (val == OCOTP_CFG3_6ULL_SPEED_792MHZ)) {
+				dev_info(dev, "Reduce the max cpu speed to 528MHz\n");
+				val = OCOTP_CFG3_6ULL_SPEED_528MHZ;
+			}
+		}
+	}
 
 	if (reg_speed_grading >= 0) {
 		dev_info(dev, "Overwrite SPEED_GRADING 0x%X => 0x%X\n",
