@@ -221,7 +221,7 @@
 	/* If not available use internal rtc (snvs-rtc-lp) */
 	rtc@56 {								// Micro Crystal RV-3029-C3 (onModule)
 		device_type = "rtc";						// ==> /dev/rtc0
-		compatible = "microc,rtc-rv3029c3", "microc,rtc-rv3029c2";
+		compatible = "microc,rtc-rv3029c3", "microc,rtc-rv3029c2", "microcrystal,rv3029";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_dhcom_rtc_hw300>;
 		reg = <0x56>;
