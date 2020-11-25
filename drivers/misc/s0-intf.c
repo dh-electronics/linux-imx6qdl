@@ -42,7 +42,7 @@
 static dev_t s0intf_devt;        /* the first major/minor numbers of char dev */
 
 #define S0INTF_DRV_NAME "s0intf"
-#define S0INTF_DRV_VERSION "0v01"
+#define S0INTF_DRV_VERSION "0v02"
 #define S0INTF_DRV_MAX_DEV 8
 #define S0INTF_DRV_FIRST_MINOR 0
 
@@ -271,7 +271,7 @@ ssize_t s0intf_read(struct file *filep, char __user *buffer,
 	unsigned long flags;
 	unsigned long head, tail;
 	struct  s0_circ_buf *cbuf;
-	int count_ts = 0;
+	int cnt_ts = 0, cnt_to_end_ts = 0;
 	int avail_ts = 0;
 	size_t len1 = 0, len2 = 0;
 	size_t len_ts;
@@ -286,12 +286,18 @@ ssize_t s0intf_read(struct file *filep, char __user *buffer,
 
 	/* calculate count of timestamps which fit into user buffer */
 	len_ts = sizeof(cbuf->data[0]);
-	count_ts = len / len_ts;
-	head = smp_load_acquire(&cbuf->head);
+	cnt_ts = len / len_ts;
+	head = cbuf->head;
 	tail = cbuf->tail;
 
 	/* check for available data */
 	if (CIRC_CNT(head, tail, S0_CIRCBUFF_LEN) < 1) {
+
+		/* non blocking */
+		if (filep->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+
+		/* blocking */
 		sdev->data_avail = false; /* wait for data */
 		wait_event_interruptible(sdev->wait, sdev->data_avail);
 	}
@@ -299,35 +305,38 @@ ssize_t s0intf_read(struct file *filep, char __user *buffer,
 	spin_lock_irqsave(&sdev->consumer_lock, flags);
 	{
 		head = smp_load_acquire(&cbuf->head);
-		tail = cbuf->tail;
+		tail = READ_ONCE(cbuf->tail);
 
 		avail_ts = CIRC_CNT(head, tail, S0_CIRCBUFF_LEN);
-		if (avail_ts < count_ts)
-			count_ts = avail_ts;
+		if (avail_ts < cnt_ts)
+			cnt_ts = avail_ts;
 
-		if (count_ts >= 1) {
+		if (cnt_ts >= 1) {
 			/* check for circ buffer flip around */
-			if (tail + count_ts >= S0_CIRCBUFF_LEN) {
-				len1 = (S0_CIRCBUFF_LEN - tail - 1) * len_ts;
-				len2 = (count_ts - (S0_CIRCBUFF_LEN - tail - 1)) * len_ts;
+			cnt_to_end_ts = CIRC_CNT_TO_END(head, tail, S0_CIRCBUFF_LEN);
+			if (cnt_ts > cnt_to_end_ts) {
+				len1 = cnt_to_end_ts * len_ts;
+				len2 = (cnt_ts - cnt_to_end_ts) * len_ts;
 			} else {
-				len1 = count_ts * len_ts;
+				len1 = cnt_ts * len_ts;
 				len2 = 0;
 			}
 
 			if (copy_to_user(buffer, &cbuf->data[tail], len1)) {
 				dev_err(&sdev->pdev->dev, "copy_to_user() failed\n");
+				spin_unlock_irqrestore(&sdev->consumer_lock, flags);
 				return -EFAULT;
 			}
 			if (len2 != 0) {
 				if (copy_to_user(buffer + len1, &cbuf->data[0], len2)) {
 					dev_err(&sdev->pdev->dev, "copy_to_user() failed\n");
+					spin_unlock_irqrestore(&sdev->consumer_lock, flags);
 					return -EFAULT;
 				}
 			}
 			/* finish read descriptor before incrementing tail. */
 			smp_store_release(&cbuf->tail,
-				(tail + count_ts) & (S0_CIRCBUFF_LEN - 1));
+				(tail + cnt_ts) & (S0_CIRCBUFF_LEN - 1));
 		}
 	}
 	spin_unlock_irqrestore(&sdev->consumer_lock, flags);
