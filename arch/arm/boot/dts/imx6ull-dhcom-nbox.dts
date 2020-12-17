@@ -14,6 +14,10 @@
 	compatible = "dh,imx6ull-dhcom-nbox", "fsl,imx6ull";
 };
 
+&cpu0 {
+	imx6ull-limit-cpu-792mhz;
+};
+
 #ifndef CFG_BOOTFLASH
 &ecspi1 { /* DHCOM SPI1 */
 	spidev@0 {
