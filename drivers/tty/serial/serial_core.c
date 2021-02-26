@@ -1524,6 +1524,9 @@ static void uart_tty_port_shutdown(struct tty_port *port)
 	if (WARN(!uport, "detached port still initialized!\n"))
 		return;
 
+	if (uport->ops->pre_shutdown)
+		uport->ops->pre_shutdown(uport);
+
 	spin_lock_irq(&uport->lock);
 	uport->ops->stop_rx(uport);
 	spin_unlock_irq(&uport->lock);
