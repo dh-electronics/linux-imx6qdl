@@ -272,25 +272,18 @@
 	pmic@58 {
 		compatible = "dlg,da9061";
 		reg = <0x58>;
-		interrupt-parent = <&gpio4>;
-		interrupts = <21 IRQ_TYPE_LEVEL_LOW>; /* GPIO U */
-		interrupt-controller;
-		status = "disabled"; /* TODO: Activate and test PMIC */
-
-		onkey {
-			compatible = "dlg,da9061-onkey", "dlg,da9062-onkey";
-			dlg,disable-key-power;
-		};
+	/* Currently no irq gpio is defined
+		interrupt-parent = <&gpioX>;
+		interrupts = <XX IRQ_TYPE_LEVEL_LOW>;
+		interrupt-controller; */
 
 		watchdog {
 			compatible = "dlg,da9061-watchdog", "dlg,da9062-watchdog";
+			wakeup-from-powerdown;
+			kernel-monitoring-enabled;
 		};
 
-		thermal {
-			compatible = "dlg,da9061-thermal", "dlg,da9062-thermal";
-			polling-delay-passive = <3000>;
-		};
-
+	/* TODO: Putting into operation
 		regulators {
 			vdd_soc_in_1v4: buck1 {
 				regulator-name = "vdd_soc_in_1v4";
@@ -338,7 +331,7 @@
 				regulator-min-microvolt = <1200000>;
 				regulator-max-microvolt = <1200000>;
 			};
-		};
+		}; */
 	};
 };
 
