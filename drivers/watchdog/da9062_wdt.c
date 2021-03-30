@@ -36,6 +36,21 @@ struct da9062_watchdog {
 	bool wakeup_from_powerdown;
 };
 
+static unsigned int da9062_wdt_set_hw_mode(struct da9062_watchdog *wdt)
+{
+	int ret;
+	int val = 0;
+
+	if (wdt->wakeup_from_powerdown)
+		val |= DA9062AA_WAKE_UP_MASK;
+
+	ret = regmap_write(wdt->hw->regmap,
+			   DA9062AA_CONTROL_F,
+			   val);
+
+	return ret;
+}
+
 static unsigned int da9062_wdt_get_hw_mode(struct da9062_watchdog *wdt)
 {
 	int ret;
@@ -100,6 +115,8 @@ static int da9062_wdt_update_timeout_register(struct da9062_watchdog *wdt,
 				  DA9062_TWDSCALE_DISABLE);
 
 	usleep_range(150, 300);
+
+	da9062_wdt_set_hw_mode(wdt);
 
 	return regmap_update_bits(chip->regmap,
 				  DA9062AA_CONTROL_D,
@@ -246,6 +263,10 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	wdt->wdtdev.parent = dev;
 
 	da9062_wdt_get_hw_mode(wdt);
+	if (of_property_read_bool(pdev->dev.of_node, "wakeup-from-powerdown")) {
+		wdt->wakeup_from_powerdown = true;
+		dev_info(wdt->hw->dev, "Enable wakeup from powerdown\n");
+	}
 
 	watchdog_set_restart_priority(&wdt->wdtdev, 128);
 
