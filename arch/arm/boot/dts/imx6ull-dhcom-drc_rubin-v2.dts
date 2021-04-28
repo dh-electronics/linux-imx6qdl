@@ -1,0 +1,123 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later)
+/*
+ * Copyright (C) 2021 DH electronics GmbH
+ */
+
+/dts-v1/;
+
+#include "imx6ull-dhcom.dtsi"
+/* Special configurations */
+//#include "imx6ull-dhcom-cfg-nand.dtsi"
+//#include "imx6ull-dhcom-cfg-sdcard.dtsi"
+//#include "imx6ull-dhcom-cfg-bootflash.dtsi"
+
+/ {
+	model = "DHCOM i.MX6ULL on DRC RUBIN v2";
+	compatible = "dh,imx6ull-dhcom-drc_rubin-v2", "fsl,imx6ull";
+
+	s0intf0 {// GPIO_A
+		id = <0>; // used for minor char dev id
+		compatible = "dh,s0-intf";
+		interrupt-parent = <&gpio5>;
+		interrupts = <0 IRQ_TYPE_EDGE_RISING>; // use GPIO_A for irq
+		status = "okay";
+	};
+};
+
+&cpu0 {
+	imx6ull-limit-cpu-792mhz;
+};
+
+#ifndef CFG_BOOTFLASH
+&ecspi1 { /* DHCOM SPI1 */
+	spidev@0 {
+		compatible = "dh,dhcom-board";
+		reg = <0>;
+		spi-max-frequency = <54000000>;
+		spi-cpha; /* Shifted clock phase (CPHA) mode */
+		spi-cpol; /* Inverse clock polarity (CPOL) mode */
+	};
+};
+#endif
+
+/delete-node/ &rtc_i2c;
+&i2c1 { /* DHCOM I2C2 */
+	rtc_i2c: rtc@68 {
+		compatible = "microcrystal,rv4162";
+		reg = <0x68>;
+	};
+};
+
+&i2c2 { /* DHCOM I2C1 */
+	eeprom@57 { /* ST M24C32-W, addresses 0x57 */
+		compatible = "st,24c32";
+		reg = <0x57>;
+		pagesize = <32>;
+	};
+};
+
+&uart1 { /* Prepare UART for RS485 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1_rtscts>;
+	uart-has-rtscts;
+	linux,rs485-enabled-at-boot-time;
+};
+
+&uart2 { /* Use UART as RS485 */
+	linux,rs485-enabled-at-boot-time;
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_drc02>;
+
+	pinctrl_hog_drc02: hog-drc02-grp {
+		fsl,pins = <
+			/* Used for uart1 CTS (RTS on DHCOM)                  GPIO I */
+			MX6UL_PAD_CSI_HSYNC__GPIO4_IO20		0x400120b0 /* GPIO J -> In2 */
+			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x400120b0 /* GPIO K -> VA1 */
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x400120b0 /* GPIO L -> VA0 */
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19		0x400120b0 /* GPIO M -> RS485-1_TX_En */
+#ifndef CFG_BOOTFLASH
+			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x400120b0 /* GPIO N -> PSOC_INT */
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x400120b0 /* GPIO O -> Out2 */
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x400120b0 /* GPIO P -> Out1 */
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x400120b0 /* GPIO Q -> HW2 */
+			MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x400120b0 /* GPIO R -> HW1 */
+			MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x400120b0 /* GPIO S -> HW0 */
+			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x400120b0 /* GPIO T -> RS485-1_RX_En */
+			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x400120b0 /* GPIO U -> RS485-2_RX_En */
+#endif
+			/* There isn't a pin defined                          GPIO V -> Not connected */
+			/* There isn't a pin defined                          GPIO W -> Not connected */
+			MX6UL_PAD_JTAG_TMS__GPIO1_IO11		0x400120b0 /* INT_HIGHEST_PRIORITY -> VIO */
+		>;
+	};
+
+	pinctrl_uart1_rtscts: uart1-rtscts-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_TX_DATA__UART1_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART1_RX_DATA__UART1_DCE_RX	0x1b0b1
+			MX6UL_PAD_UART1_RTS_B__UART1_DCE_RTS	0x1b0b1
+			MX6UL_PAD_UART1_CTS_B__UART1_DCE_CTS	0x1b0b1
+		>;
+	};
+};
+
+&iomuxc_snvs {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_snvs_hog_drc02>;
+
+	pinctrl_snvs_hog_drc02: snvs-hog-drc02-grp {
+		fsl,pins = <
+			MX6ULL_PAD_SNVS_TAMPER0__GPIO5_IO00	0x400120b0 /* GPIO A -> S0 */
+			MX6ULL_PAD_SNVS_TAMPER1__GPIO5_IO01	0x400120b0 /* GPIO B -> Debug_EN */
+			MX6ULL_PAD_SNVS_TAMPER2__GPIO5_IO02	0x400120b0 /* GPIO C -> USB_OCSTAT_2 */
+			MX6ULL_PAD_SNVS_TAMPER3__GPIO5_IO03	0x400120b0 /* GPIO D -> GPIO_D_LD_BL1 */
+			MX6ULL_PAD_SNVS_TAMPER4__GPIO5_IO04	0x400120b0 /* GPIO E -> USB_PWR_EN_2 */
+			MX6ULL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x400120b0 /* GPIO F -> GPIO_F_LD_BL2 */
+			MX6ULL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x400120b0 /* GPIO G -> GPIO_G */
+			MX6ULL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x400120b0 /* GPIO H -> In1 */
+		>;
+	};
+};
