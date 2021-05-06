@@ -71,6 +71,11 @@
 	linux,rs485-enabled-at-boot-time;
 };
 
+&usdhc1 { /* Disable WiFi on LGA */
+	/delete-property/ mmc-pwrseq; /* Release GPIO H */
+	status = "disabled";
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog_drc02>;
