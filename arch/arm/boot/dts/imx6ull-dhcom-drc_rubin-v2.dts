@@ -57,13 +57,17 @@
 };
 
 &uart1 { /* Prepare UART for RS485 */
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart1_rtscts>;
+	pinctrl-names = "rs485_idle", "rs485_active";
+	pinctrl-0 = <&pinctrl_uart1_rs485_idle>;
+	pinctrl-1 = <&pinctrl_uart1_rs485_active>;
 	uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
 };
 
 &uart2 { /* Use UART as RS485 */
+	pinctrl-names = "rs485_idle", "rs485_active";
+	pinctrl-0 = <&pinctrl_uart2_rs485_idle>;
+	pinctrl-1 = <&pinctrl_uart2_rs485_active>;
 	linux,rs485-enabled-at-boot-time;
 };
 
@@ -94,12 +98,39 @@
 		>;
 	};
 
-	pinctrl_uart1_rtscts: uart1-rtscts-grp {
+	pinctrl_uart1_rs485_idle: uart1-rs485-idle-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART1_TX_DATA__UART1_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART1_RX_DATA__UART1_DCE_RX	0x1b0b1
+			MX6UL_PAD_UART1_RTS_B__GPIO1_IO19	0x130b0
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x130b0
+		>;
+	};
+
+	pinctrl_uart1_rs485_active: uart1-rs485-active-grp {
 		fsl,pins = <
 			MX6UL_PAD_UART1_TX_DATA__UART1_DCE_TX	0x1b0b1
 			MX6UL_PAD_UART1_RX_DATA__UART1_DCE_RX	0x1b0b1
 			MX6UL_PAD_UART1_RTS_B__UART1_DCE_RTS	0x1b0b1
 			MX6UL_PAD_UART1_CTS_B__UART1_DCE_CTS	0x1b0b1
+		>;
+	};
+
+	pinctrl_uart2_rs485_idle: uart2-rs485-idle-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART2_TX_DATA__UART2_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX	0x1b0b1
+			MX6UL_PAD_UART3_RX_DATA__GPIO1_IO25	0x130b0
+			MX6UL_PAD_UART3_TX_DATA__GPIO1_IO24	0x130b0
+		>;
+	};
+
+	pinctrl_uart2_rs485_active: uart2-rs485-active-grp {
+		fsl,pins = <
+			MX6UL_PAD_UART2_TX_DATA__UART2_DCE_TX	0x1b0b1
+			MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX	0x1b0b1
+			MX6UL_PAD_UART3_RX_DATA__UART2_DCE_RTS	0x1b0b1
+			MX6UL_PAD_UART3_TX_DATA__UART2_DCE_CTS	0x1b0b1
 		>;
 	};
 };
