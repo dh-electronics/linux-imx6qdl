@@ -31,7 +31,7 @@
 
 #define MAX_CRTC	4
 
-static int legacyfb_depth = 16;
+static int legacyfb_depth = 32;
 module_param(legacyfb_depth, int, 0444);
 
 DEFINE_DRM_GEM_CMA_FOPS(imx_drm_driver_fops);
