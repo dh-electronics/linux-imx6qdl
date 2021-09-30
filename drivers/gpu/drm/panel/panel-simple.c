@@ -376,6 +376,8 @@ static int panel_simple_get_modes(struct drm_panel *panel,
 	/* set up connector's "panel orientation" property */
 	drm_connector_set_panel_orientation(connector, p->orientation);
 
+	drm_mode_show_timings_pref_mode(connector);
+
 	return num;
 }
 
