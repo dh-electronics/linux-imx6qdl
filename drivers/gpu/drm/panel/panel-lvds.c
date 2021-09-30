@@ -103,6 +103,8 @@ static int panel_lvds_get_modes(struct drm_panel *panel,
 					  : DRM_BUS_FLAG_DATA_MSB_TO_LSB;
 	drm_connector_set_panel_orientation(connector, lvds->orientation);
 
+	drm_mode_show_timings_pref_mode(connector);
+
 	return 1;
 }
 
