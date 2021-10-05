@@ -33,7 +33,25 @@ struct da9062_watchdog {
 	struct da9062 *hw;
 	struct watchdog_device wdtdev;
 	bool use_sw_pm;
+	bool wakeup_from_powerdown;
 };
+
+static unsigned int da9062_wdt_get_hw_mode(struct da9062_watchdog *wdt)
+{
+	int ret;
+	int val;
+
+	ret = regmap_read(wdt->hw->regmap, DA9062AA_CONTROL_F, &val);
+	if (ret == 0) {
+		wdt->wakeup_from_powerdown = false;
+		if (val & DA9062AA_WAKE_UP_MASK) {
+			wdt->wakeup_from_powerdown = true;
+			dev_info(wdt->hw->dev, "HW state: WAKE_UP bit is already set\n");
+		}
+	}
+
+	return ret;
+}
 
 static unsigned int da9062_wdt_read_timeout(struct da9062_watchdog *wdt)
 {
@@ -58,9 +76,17 @@ static unsigned int da9062_wdt_timeout_to_sel(unsigned int secs)
 
 static int da9062_reset_watchdog_timer(struct da9062_watchdog *wdt)
 {
-	return regmap_update_bits(wdt->hw->regmap, DA9062AA_CONTROL_F,
-				  DA9062AA_WATCHDOG_MASK,
-				  DA9062AA_WATCHDOG_MASK);
+	int ret;
+	int val = DA9062AA_WATCHDOG_MASK;
+
+	if (wdt->wakeup_from_powerdown)
+		val |= DA9062AA_WAKE_UP_MASK;
+
+	ret = regmap_write(wdt->hw->regmap,
+			   DA9062AA_CONTROL_F,
+			   val);
+
+	return ret;
 }
 
 static int da9062_wdt_update_timeout_register(struct da9062_watchdog *wdt,
@@ -218,6 +244,8 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	wdt->wdtdev.timeout = DA9062_WDG_DEFAULT_TIMEOUT;
 	wdt->wdtdev.status = WATCHDOG_NOWAYOUT_INIT_STATUS;
 	wdt->wdtdev.parent = dev;
+
+	da9062_wdt_get_hw_mode(wdt);
 
 	watchdog_set_restart_priority(&wdt->wdtdev, 128);
 
