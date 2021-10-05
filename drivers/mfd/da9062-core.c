@@ -623,7 +623,7 @@ static int da9062_i2c_probe(struct i2c_client *i2c,
 {
 	struct da9062 *chip;
 	const struct of_device_id *match;
-	unsigned int irq_base;
+	unsigned int irq_base = 0;
 	const struct mfd_cell *cell;
 	const struct regmap_irq_chip *irq_chip;
 	const struct regmap_config *config;
@@ -647,11 +647,6 @@ static int da9062_i2c_probe(struct i2c_client *i2c,
 
 	i2c_set_clientdata(i2c, chip);
 	chip->dev = &i2c->dev;
-
-	if (!i2c->irq) {
-		dev_err(chip->dev, "No IRQ configured\n");
-		return -EINVAL;
-	}
 
 	switch (chip->chip_type) {
 	case COMPAT_TYPE_DA9061:
@@ -687,29 +682,32 @@ static int da9062_i2c_probe(struct i2c_client *i2c,
 	if (ret)
 		return ret;
 
-	ret = da9062_configure_irq_type(chip, i2c->irq, &trigger_type);
-	if (ret < 0) {
-		dev_err(chip->dev, "Failed to configure IRQ type\n");
-		return ret;
-	}
+	if (i2c->irq) {
+		ret = da9062_configure_irq_type(chip, i2c->irq, &trigger_type);
+		if (ret < 0) {
+			dev_err(chip->dev, "Failed to configure IRQ type\n");
+			return ret;
+		}
 
-	ret = regmap_add_irq_chip(chip->regmap, i2c->irq,
-			trigger_type | IRQF_SHARED | IRQF_ONESHOT,
-			-1, irq_chip, &chip->regmap_irq);
-	if (ret) {
-		dev_err(chip->dev, "Failed to request IRQ %d: %d\n",
-			i2c->irq, ret);
-		return ret;
-	}
+		ret = regmap_add_irq_chip(chip->regmap, i2c->irq,
+				trigger_type | IRQF_SHARED | IRQF_ONESHOT,
+				-1, irq_chip, &chip->regmap_irq);
+		if (ret) {
+			dev_err(chip->dev, "Failed to request IRQ %d: %d\n",
+				i2c->irq, ret);
+			return ret;
+		}
 
-	irq_base = regmap_irq_chip_get_base(chip->regmap_irq);
+		irq_base = regmap_irq_chip_get_base(chip->regmap_irq);
+	}
 
 	ret = mfd_add_devices(chip->dev, PLATFORM_DEVID_NONE, cell,
 			      cell_num, NULL, irq_base,
 			      NULL);
 	if (ret) {
 		dev_err(chip->dev, "Cannot register child devices\n");
-		regmap_del_irq_chip(i2c->irq, chip->regmap_irq);
+		if (i2c->irq)
+			regmap_del_irq_chip(i2c->irq, chip->regmap_irq);
 		return ret;
 	}
 
