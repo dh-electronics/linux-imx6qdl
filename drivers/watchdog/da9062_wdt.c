@@ -36,6 +36,8 @@ struct da9062_watchdog {
 	bool wakeup_from_powerdown;
 };
 
+static DEFINE_MUTEX(da9062_reset_watchdog_mutex);
+
 static unsigned int da9062_wdt_set_hw_mode(struct da9062_watchdog *wdt)
 {
 	int ret;
@@ -89,6 +91,7 @@ static unsigned int da9062_wdt_timeout_to_sel(unsigned int secs)
 	return DA9062_TWDSCALE_MAX;
 }
 
+/* Must be called under da9062_reset_watchdog_mutex */
 static int da9062_reset_watchdog_timer(struct da9062_watchdog *wdt)
 {
 	int ret;
@@ -100,6 +103,13 @@ static int da9062_reset_watchdog_timer(struct da9062_watchdog *wdt)
 	ret = regmap_write(wdt->hw->regmap,
 			   DA9062AA_CONTROL_F,
 			   val);
+
+	/*
+	 * If this reset function is called too fast
+	 * one after the other, the watchdog triggers.
+	 * So wait here the reset protection time.
+	 */
+	mdelay(DA9062_RESET_PROTECTION_MS);
 
 	return ret;
 }
@@ -135,6 +145,8 @@ static int da9062_wdt_start(struct watchdog_device *wdd)
 	if (ret)
 		dev_err(wdt->hw->dev, "Watchdog failed to start (err = %d)\n",
 			ret);
+	else
+		set_bit(WDOG_HW_RUNNING, &wdd->status);
 
 	return ret;
 }
@@ -167,7 +179,9 @@ static int da9062_wdt_ping(struct watchdog_device *wdd)
 	if (system_state > SYSTEM_RUNNING)
 		return 0;
 
+	mutex_lock(&da9062_reset_watchdog_mutex);
 	ret = da9062_reset_watchdog_timer(wdt);
+	mutex_unlock(&da9062_reset_watchdog_mutex);
 	if (ret)
 		dev_err(wdt->hw->dev, "Failed to ping the watchdog (err = %d)\n",
 			ret);
@@ -237,6 +251,7 @@ MODULE_DEVICE_TABLE(of, da9062_compatible_id_table);
 static int da9062_wdt_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+	int ret;
 	unsigned int timeout;
 	struct da9062 *chip;
 	struct da9062_watchdog *wdt;
@@ -258,6 +273,7 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	wdt->wdtdev.min_timeout = DA9062_WDT_MIN_TIMEOUT;
 	wdt->wdtdev.max_timeout = DA9062_WDT_MAX_TIMEOUT;
 	wdt->wdtdev.min_hw_heartbeat_ms = DA9062_RESET_PROTECTION_MS;
+	wdt->wdtdev.max_hw_heartbeat_ms = DA9062_WDT_MAX_TIMEOUT * 1000;
 	wdt->wdtdev.timeout = DA9062_WDG_DEFAULT_TIMEOUT;
 	wdt->wdtdev.status = WATCHDOG_NOWAYOUT_INIT_STATUS;
 	wdt->wdtdev.parent = dev;
@@ -267,6 +283,9 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 		wdt->wakeup_from_powerdown = true;
 		dev_info(wdt->hw->dev, "Enable wakeup from powerdown\n");
 	}
+
+	if (of_property_read_bool(pdev->dev.of_node, "kernel-monitoring-enabled"))
+		set_bit(WDOG_HW_ALWAYS_ENABLED, &wdt->wdtdev.status);
 
 	watchdog_set_restart_priority(&wdt->wdtdev, 128);
 
@@ -280,12 +299,16 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	/* Set timeout from DT value if available */
 	watchdog_init_timeout(&wdt->wdtdev, 0, dev);
 
-	if (timeout) {
-		da9062_wdt_set_timeout(&wdt->wdtdev, wdt->wdtdev.timeout);
-		set_bit(WDOG_HW_RUNNING, &wdt->wdtdev.status);
+	if (test_bit(WDOG_HW_ALWAYS_ENABLED, &wdt->wdtdev.status)) {
+		da9062_wdt_start(&wdt->wdtdev);
+		dev_info(wdt->hw->dev, "Enabling the watchdog (keep alive by kernel)\n");
 	}
 
-	return devm_watchdog_register_device(dev, &wdt->wdtdev);
+	ret = devm_watchdog_register_device(dev, &wdt->wdtdev);
+	if (ret < 0)
+		return ret;
+
+	return da9062_wdt_ping(&wdt->wdtdev);
 }
 
 static int __maybe_unused da9062_wdt_suspend(struct device *dev)
