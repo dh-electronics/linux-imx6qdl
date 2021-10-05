@@ -36,6 +36,11 @@ struct da9062_watchdog {
 	bool wakeup_from_powerdown;
 };
 
+static unsigned timeout = 0;
+module_param(timeout, uint, 0);
+MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
+				__MODULE_STRING(DA9062_WDG_DEFAULT_TIMEOUT) ")");
+
 static DEFINE_MUTEX(da9062_reset_watchdog_mutex);
 
 static unsigned int da9062_wdt_set_hw_mode(struct da9062_watchdog *wdt)
@@ -258,7 +263,7 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	int ret;
-	unsigned int timeout;
+	unsigned int reg_timeout;
 	struct da9062 *chip;
 	struct da9062_watchdog *wdt;
 
@@ -300,12 +305,12 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	watchdog_set_drvdata(&wdt->wdtdev, wdt);
 	dev_set_drvdata(dev, &wdt->wdtdev);
 
-	timeout = da9062_wdt_read_timeout(wdt);
-	if (timeout)
-		wdt->wdtdev.timeout = timeout;
+	reg_timeout = da9062_wdt_read_timeout(wdt);
+	if (reg_timeout)
+		wdt->wdtdev.timeout = reg_timeout;
 
-	/* Set timeout from DT value if available */
-	watchdog_init_timeout(&wdt->wdtdev, 0, dev);
+	/* Set timeout from parameter or DT value if available */
+	watchdog_init_timeout(&wdt->wdtdev, timeout, dev);
 
 	if (test_bit(WDOG_HW_ALWAYS_ENABLED, &wdt->wdtdev.status)) {
 		da9062_wdt_start(&wdt->wdtdev);
