@@ -28,6 +28,7 @@
 #include <linux/of_device.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
+#include <linux/pinctrl/consumer.h>
 
 #include <asm/irq.h>
 #include <linux/platform_data/serial-imx.h>
@@ -236,6 +237,11 @@ struct imx_port {
 	enum imx_tx_state	tx_state;
 	struct hrtimer		trigger_start_tx;
 	struct hrtimer		trigger_stop_tx;
+
+	bool			rs485_pinctrl_is_enabled;
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_rs485_idle;
+	struct pinctrl_state	*pins_rs485_active;
 };
 
 struct imx_port_ucrs {
@@ -710,6 +716,11 @@ static void imx_uart_start_tx(struct uart_port *port)
 	if (port->rs485.flags & SER_RS485_ENABLED) {
 		if (sport->tx_state == OFF) {
 			u32 ucr2 = imx_uart_readl(sport, UCR2);
+
+			if (sport->rs485_pinctrl_is_enabled)
+				pinctrl_select_state(sport->pinctrl,
+						     sport->pins_rs485_active);
+
 			if (port->rs485.flags & SER_RS485_RTS_ON_SEND)
 				imx_uart_rts_active(sport, &ucr2);
 			else
@@ -1588,6 +1599,14 @@ static void imx_uart_shutdown(struct uart_port *port)
 	clk_disable_unprepare(sport->clk_ipg);
 }
 
+static void imx_uart_pre_shutdown(struct uart_port *port)
+{
+	struct imx_port *sport = (struct imx_port *)port;
+
+	if (sport->rs485_pinctrl_is_enabled)
+		pinctrl_select_state(sport->pinctrl, sport->pins_rs485_idle);
+}
+
 /* called with port.lock taken and irqs off */
 static void imx_uart_flush_buffer(struct uart_port *port)
 {
@@ -1928,6 +1947,28 @@ static void imx_uart_poll_put_char(struct uart_port *port, unsigned char c)
 }
 #endif
 
+static void imx_uart_rs485_setup_pinctrl(struct uart_port *port,
+					 struct serial_rs485 *rs485conf)
+{
+	struct imx_port *sport = (struct imx_port *)port;
+
+	sport->pins_rs485_idle = pinctrl_lookup_state(sport->pinctrl,
+						      "rs485_idle");
+	sport->pins_rs485_active = pinctrl_lookup_state(sport->pinctrl,
+						        "rs485_active");
+
+	sport->rs485_pinctrl_is_enabled = false;
+	if (!IS_ERR(sport->pins_rs485_idle) &&
+	    !IS_ERR(sport->pins_rs485_active)) {
+		if (rs485conf->flags & SER_RS485_ENABLED) {
+			sport->rs485_pinctrl_is_enabled = true;
+			pinctrl_select_state(sport->pinctrl, sport->pins_rs485_idle);
+		} else {
+			pinctrl_select_state(sport->pinctrl, sport->pins_rs485_active);
+		}
+	}
+}
+
 /* called with port.lock taken and irqs off or from .probe without locking */
 static int imx_uart_rs485_config(struct uart_port *port,
 				 struct serial_rs485 *rs485conf)
@@ -1961,6 +2002,8 @@ static int imx_uart_rs485_config(struct uart_port *port,
 
 	port->rs485 = *rs485conf;
 
+	imx_uart_rs485_setup_pinctrl(port, rs485conf);
+
 	return 0;
 }
 
@@ -1974,6 +2017,7 @@ static const struct uart_ops imx_uart_pops = {
 	.enable_ms	= imx_uart_enable_ms,
 	.break_ctl	= imx_uart_break_ctl,
 	.startup	= imx_uart_startup,
+	.pre_shutdown	= imx_uart_pre_shutdown,
 	.shutdown	= imx_uart_shutdown,
 	.flush_buffer	= imx_uart_flush_buffer,
 	.set_termios	= imx_uart_set_termios,
@@ -2288,6 +2332,10 @@ static int imx_uart_probe(struct platform_device *pdev)
 	sport = devm_kzalloc(&pdev->dev, sizeof(*sport), GFP_KERNEL);
 	if (!sport)
 		return -ENOMEM;
+
+	sport->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(sport->pinctrl))
+		return PTR_ERR(sport->pinctrl);
 
 	ret = imx_uart_probe_dt(sport, pdev);
 	if (ret > 0)
