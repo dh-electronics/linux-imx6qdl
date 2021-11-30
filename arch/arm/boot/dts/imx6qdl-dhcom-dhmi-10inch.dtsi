@@ -40,7 +40,7 @@
 			reg = <1>;
 
 			lcd_display_out: endpoint {
-				remote-endpoint = <&lcd_panel_in>;
+				remote-endpoint = <&lvds_bridge_in>;
 			};
 		};
 	};
@@ -58,13 +58,39 @@
 		};
 	};
 
+	lvds-encoder {
+		compatible = "onsemi,fin3385", "lvds-encoder";
+		pixelclk-active = <0>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				lvds_bridge_in: endpoint {
+					remote-endpoint = <&lcd_display_out>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				lvds_bridge_out: endpoint {
+					remote-endpoint = <&lvds_panel_in>;
+				};
+			};
+		};
+	};
+
 	panel {
 		backlight = <&display_bl>;
-		compatible = "edt,etm0700g0edh6";
+		compatible = "chefree,ch101olhlwh-002";
 
 		port {
-			lcd_panel_in: endpoint {
-				remote-endpoint = <&lcd_display_out>;
+			lvds_panel_in: endpoint {
+				remote-endpoint = <&lvds_bridge_out>;
 			};
 		};
 	};
@@ -95,13 +121,18 @@
 };
 
 &i2c2 {
-	touchscreen@38 {
-		compatible = "edt,edt-ft5406";
+	ili251x@41 {
+		compatible = "ilitek,ili251x";
 		interrupt-parent = <&gpio4>;
-		interrupts = <5 IRQ_TYPE_EDGE_FALLING>; /* GPIO E */
-		pinctrl-0 = <&pinctrl_dhcom_e>;
+		interrupts = <7 IRQ_TYPE_EDGE_FALLING>; /* GPIO H */
+		pinctrl-0 = <&pinctrl_dhcom_b &pinctrl_dhcom_h>;
 		pinctrl-names = "default";
-		reg = <0x38>;
+		reg = <0x41>;
+		reset-gpios = <&gpio1 4 GPIO_ACTIVE_LOW>; /* GPIO B */
+		touchscreen-inverted-x;
+		touchscreen-inverted-y;
+		touchscreen-size-x = <0x4000>;
+		touchscreen-size-y = <0x2580>;
 	};
 };
 
@@ -118,14 +149,14 @@
 			/*
 			 * The following DHCOM GPIOs are used on this board.
 			 * Therefore, they have been removed from the list below.
-			 * E: touchscreen
+			 * B: touchscreen reset
 			 * G: backlight enable
+			 * H: touchscreen interrupt
 			 * I: yellow led
 			 */
 			&pinctrl_hog_base
-			&pinctrl_dhcom_a &pinctrl_dhcom_b &pinctrl_dhcom_c
-			&pinctrl_dhcom_d &pinctrl_dhcom_f
-			&pinctrl_dhcom_h
+			&pinctrl_dhcom_a &pinctrl_dhcom_c
+			&pinctrl_dhcom_d &pinctrl_dhcom_e &pinctrl_dhcom_f
 			&pinctrl_dhcom_j &pinctrl_dhcom_k &pinctrl_dhcom_l
 			&pinctrl_dhcom_m &pinctrl_dhcom_n &pinctrl_dhcom_o
 			&pinctrl_dhcom_p &pinctrl_dhcom_q &pinctrl_dhcom_r
