@@ -300,6 +300,7 @@ static int da9062_get_device_type(struct da9062 *chip)
 {
 	int device_id, variant_id, variant_mrc, variant_vrc;
 	char *type;
+	char *var;
 	int ret;
 
 	ret = regmap_read(chip->regmap, DA9062AA_DEVICE_ID, &device_id);
@@ -332,11 +333,25 @@ static int da9062_get_device_type(struct da9062 *chip)
 		break;
 	}
 
-	dev_info(chip->dev,
-		 "Device detected (device-ID: 0x%02X, var-ID: 0x%02X, %s)\n",
-		 device_id, variant_id, type);
-
 	variant_mrc = (variant_id & DA9062AA_MRC_MASK) >> DA9062AA_MRC_SHIFT;
+	switch (variant_mrc) {
+	case DA9062_PMIC_VARIANT_MRC_AA:
+		var = "-AA";
+		break;
+	case DA9062_PMIC_VARIANT_MRC_AB:
+		var = "-AB";
+		break;
+	case DA9062_PMIC_VARIANT_MRC_BA:
+		var = "-BA";
+		break;
+	default:
+		var = "";
+		break;
+	}
+
+	dev_info(chip->dev,
+		 "Device detected (device-ID: 0x%02X, var-ID: 0x%02X, %s%s)\n",
+		 device_id, variant_id, type, var);
 
 	if (variant_mrc < DA9062_PMIC_VARIANT_MRC_AA) {
 		dev_err(chip->dev,
