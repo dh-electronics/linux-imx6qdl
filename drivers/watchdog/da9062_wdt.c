@@ -20,14 +20,20 @@
 #include <linux/regmap.h>
 #include <linux/of.h>
 
-static const unsigned int wdt_timeout[] = { 0, 2, 4, 8, 16, 32, 65, 131 };
+#define DA9062_TWDSCALE_SIZE		8
 #define DA9062_TWDSCALE_DISABLE		0
 #define DA9062_TWDSCALE_MIN		1
-#define DA9062_TWDSCALE_MAX		(ARRAY_SIZE(wdt_timeout) - 1)
+#define DA9062_TWDSCALE_MAX		(DA9062_TWDSCALE_SIZE - 1)
 #define DA9062_WDT_MIN_TIMEOUT		wdt_timeout[DA9062_TWDSCALE_MIN]
 #define DA9062_WDT_MAX_TIMEOUT		wdt_timeout[DA9062_TWDSCALE_MAX]
 #define DA9062_WDG_DEFAULT_TIMEOUT	wdt_timeout[DA9062_TWDSCALE_MAX-1]
 #define DA9062_RESET_PROTECTION_MS	300
+
+static const unsigned int wdt_timeout_clk_inter_25khz[DA9062_TWDSCALE_SIZE] =
+			  { 0, 2, 5, 10, 20, 41, 83, 167 };
+static const unsigned int wdt_timeout_clk_extern_32khz[DA9062_TWDSCALE_SIZE] =
+			  { 0, 2, 4, 8, 16, 32, 65, 131 };
+static const unsigned int *wdt_timeout = NULL;
 
 struct da9062_watchdog {
 	struct da9062 *hw;
@@ -47,6 +53,30 @@ MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
 				__MODULE_STRING(DA9062_WDG_DEFAULT_TIMEOUT) ")");
 
 static DEFINE_MUTEX(da9062_reset_watchdog_mutex);
+
+static int da9062_wdt_is_crystal_present(struct da9062_watchdog *wdt)
+{
+	unsigned int val;
+	int ret;
+
+	switch (wdt->hw->chip_type) {
+	case COMPAT_TYPE_DA9061:
+		/* There is no possibility to connect a crystal */
+		val = 0;
+		break;
+	case COMPAT_TYPE_DA9062:
+		ret = regmap_read(wdt->hw->regmap, DA9062AA_EN_32K, &val);
+		if (ret)
+			return ret;
+		val = (val & DA9062AA_CRYSTAL_MASK) >> DA9062AA_CRYSTAL_SHIFT;
+		break;
+	default:
+		return -ENODEV;
+		break;
+	}
+
+	return val;
+}
 
 static unsigned int da9062_wdt_set_hw_mode(struct da9062_watchdog *wdt)
 {
@@ -271,6 +301,7 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	unsigned int reg_timeout;
 	struct da9062 *chip;
 	struct da9062_watchdog *wdt;
+	int is_crystal_present;
 
 	chip = dev_get_drvdata(dev->parent);
 	if (!chip)
@@ -283,6 +314,18 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	wdt->use_sw_pm = device_property_present(dev, "dlg,use-sw-pm");
 
 	wdt->hw = chip;
+
+	/* Set timeout values based on the availability of an external crystal */
+	is_crystal_present = da9062_wdt_is_crystal_present(wdt);
+	if (is_crystal_present < 0)
+		return is_crystal_present;
+	if (is_crystal_present) {
+		wdt_timeout = wdt_timeout_clk_extern_32khz;
+		dev_info(wdt->hw->dev, "Set timeout values for 32kHz (external oscillator)\n");
+	} else {
+		wdt_timeout = wdt_timeout_clk_inter_25khz;
+		dev_info(wdt->hw->dev, "Set timeout values for 25kHz (internal oscillator)\n");
+	}
 
 	wdt->wdtdev.info = &da9062_watchdog_info;
 	wdt->wdtdev.ops = &da9062_watchdog_ops;
