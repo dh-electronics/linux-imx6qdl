@@ -36,6 +36,11 @@ struct da9062_watchdog {
 	bool wakeup_from_powerdown;
 };
 
+static bool nowayout = WATCHDOG_NOWAYOUT;
+module_param(nowayout, bool, 0);
+MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
+				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
+
 static unsigned timeout = 0;
 module_param(timeout, uint, 0);
 MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
@@ -286,8 +291,9 @@ static int da9062_wdt_probe(struct platform_device *pdev)
 	wdt->wdtdev.min_hw_heartbeat_ms = DA9062_RESET_PROTECTION_MS;
 	wdt->wdtdev.max_hw_heartbeat_ms = DA9062_WDT_MAX_TIMEOUT * 1000;
 	wdt->wdtdev.timeout = DA9062_WDG_DEFAULT_TIMEOUT;
-	wdt->wdtdev.status = WATCHDOG_NOWAYOUT_INIT_STATUS;
 	wdt->wdtdev.parent = dev;
+
+	watchdog_set_nowayout(&wdt->wdtdev, nowayout);
 
 	da9062_wdt_get_hw_mode(wdt);
 	if (of_property_read_bool(pdev->dev.of_node, "wakeup-from-powerdown")) {
