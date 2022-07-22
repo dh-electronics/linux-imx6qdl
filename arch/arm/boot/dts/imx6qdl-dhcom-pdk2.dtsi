@@ -55,7 +55,7 @@
 		};
 	};
 
-	gpio-keys {
+	buttons: gpio-keys {
 		#size-cells = <0>;
 		compatible = "gpio-keys";
 
@@ -96,7 +96,7 @@
 		};
 	};
 
-	led {
+	leds: led {
 		compatible = "gpio-leds";
 
 		/*
