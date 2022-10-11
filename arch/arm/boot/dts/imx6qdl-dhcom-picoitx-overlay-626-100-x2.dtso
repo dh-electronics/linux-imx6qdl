@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (C) 2023 DH electronics GmbH
+ */
+/dts-v1/;
+/plugin/;
+
+#include "imx6qdl-dhcom-overlay-panel-dpi-lvds-bridge.dtsi"
+
+&display_bl {
+	enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>; /* GPIO G */
+	pwms = <&pwm1 0 50000 PWM_POLARITY_INVERTED>;
+};
+
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	touchscreen@41 {
+		compatible = "ilitek,ili251x";
+		reg = <0x41>;
+		interrupt-parent = <&gpio4>;
+		interrupts = <7 IRQ_TYPE_EDGE_FALLING>; /* GPIO H */
+		reset-gpios = <&gpio1 4 GPIO_ACTIVE_LOW>; /* GPIO B */
+		touchscreen-inverted-x;
+		touchscreen-inverted-y;
+		touchscreen-size-x = <0x4000>;
+		touchscreen-size-y = <0x2580>;
+	};
+
+	eeprom@50 {
+		compatible = "atmel,24c04";
+		reg = <0x50>;
+		label = "eeprom-display";
+		pagesize = <16>;
+	};
+};
+
+&panel {
+	compatible = "chefree,ch101olhlwh-002";
+};
