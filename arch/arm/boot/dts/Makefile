@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 
+DTC_FLAGS_imx6dl-dhcom-picoitx := -@
+DTC_FLAGS_imx6q-dhcom-picoitx := -@
+DTC_FLAGS_imx6s-dhcom-picoitx := -@
+
 DTC_FLAGS_imx6dl-dhcom-pdk2 := -@
 DTC_FLAGS_imx6q-dhcom-pdk2 := -@
 DTC_FLAGS_imx6s-dhcom-pdk2 := -@
@@ -489,6 +493,11 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6dl-cubox-i-som-v15.dtb \
 	imx6dl-dfi-fs700-m60.dtb \
 	imx6dl-dhcom-picoitx.dtb \
+	imx6qdl-dhcom-picoitx-overlay-539-400-x2.dtbo \
+	imx6qdl-dhcom-picoitx-overlay-548-200-x2.dtbo \
+	imx6qdl-dhcom-picoitx-overlay-553-100-x2.dtbo \
+	imx6qdl-dhcom-picoitx-overlay-626-100-x2.dtbo \
+	imx6qdl-dhcom-picoitx-overlay-rs485-x8.dtbo \
 	imx6dl-eckelmann-ci4x10.dtb \
 	imx6dl-emcon-avari.dtb \
 	imx6dl-gw51xx.dtb \
@@ -579,6 +588,11 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6q-cubox-i-som-v15.dtb \
 	imx6q-dfi-fs700-m60.dtb \
 	imx6q-dhcom-pdk2.dtb \
+	imx6qdl-dhcom-pdk2-overlay-460-200-x11.dtbo \
+	imx6qdl-dhcom-pdk2-overlay-497-200-x12.dtbo \
+	imx6qdl-dhcom-pdk2-overlay-505-200-x12.dtbo \
+	imx6qdl-dhcom-pdk2-overlay-531-100-x21.dtbo \
+	imx6qdl-dhcom-pdk2-overlay-531-100-x22.dtbo \
 	imx6qdl-dhcom-pdk2-overlay-560-200-x12.dtbo \
 	imx6q-display5-tianma-tm070-1280x768.dtb \
 	imx6q-dmo-edmqmx6.dtb \
