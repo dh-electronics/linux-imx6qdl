@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (C) 2021 Marek Vasut <marex@denx.de>
+ */
+/dts-v1/;
+/plugin/;
+
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	eeprom@56 {
+		compatible = "atmel,24c04";
+		reg = <0x56>;
+		pagesize = <16>;
+	};
+};
+
+&ecspi1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	at25@1 {
+		compatible = "microchip,25aa010a", "atmel,at25";
+		reg = <1>;
+		spi-max-frequency = <5000000>;
+
+		at25,byte-len = <128>;
+		at25,addr-mode = <1>;
+		at25,page-size = <16>;
+	};
+};

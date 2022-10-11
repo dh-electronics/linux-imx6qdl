@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (C) 2023 DH electronics GmbH
+ */
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
+&weim {
+	#address-cells = <2>;
+	#size-cells = <1>;
+	status = "okay";
+
+	uiomap-cs0@0,0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "generic-uio";
+		reg = <0 0x00000000 0x04000000>;
+		fsl,weim-cs-timing = <0x00610089 0x00001002 0x0F011061
+				      0x00000000 0x0F068A31 0x00000000>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <2 IRQ_TYPE_EDGE_FALLING>; /* GPIO A */
+		reg-names = "uio_cs0";
+		status = "okay";
+	};
+
+	uiomap-cs1@0,1 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "generic-uio";
+		reg = <1 0x00000000 0x04000000>;
+		fsl,weim-cs-timing = <0x00610089 0x00001002 0x0F011061
+				      0x00000000 0x0F068A31 0x00000000>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <4 IRQ_TYPE_EDGE_FALLING>; /* GPIO B */
+		reg-names = "uio_cs1";
+		status = "disabled";
+	};
+};
