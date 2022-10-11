@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (C) 2023 DH electronics GmbH
+ */
+/dts-v1/;
+/plugin/;
+
+#include "imx6qdl-dhcom-overlay-panel-dpi.dtsi"
+
+&display_bl {
+	enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>; /* GPIO G */
+	pwms = <&pwm1 0 3333333 0>;
+};
+
+&panel {
+	compatible = "multi-inno,mi0800ft-9";
+};
+
+&i2c3 {
+	touchscreen@49 { /* TSC2004 */
+		status = "okay";
+	};
+};
