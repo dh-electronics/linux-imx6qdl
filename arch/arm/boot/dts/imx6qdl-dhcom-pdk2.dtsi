@@ -20,41 +20,6 @@
 		compatible = "fixed-clock";
 	};
 
-	display_bl: display-bl {
-		brightness-levels = <0 16 22 30 40 55 75 102 138 188 255>;
-		compatible = "pwm-backlight";
-		default-brightness-level = <8>;
-		enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>; /* GPIO G */
-		pwms = <&pwm1 0 50000 PWM_POLARITY_INVERTED>;
-		status = "okay";
-	};
-
-	lcd_display: disp0 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "fsl,imx-parallel-display";
-		interface-pix-fmt = "rgb24";
-		pinctrl-0 = <&pinctrl_ipu1_lcdif &pinctrl_dhcom_g>;
-		pinctrl-names = "default";
-		status = "okay";
-
-		port@0 {
-			reg = <0>;
-
-			lcd_display_in: endpoint {
-				remote-endpoint = <&ipu1_di0_disp0>;
-			};
-		};
-
-		port@1 {
-			reg = <1>;
-
-			lcd_display_out: endpoint {
-				remote-endpoint = <&lcd_panel_in>;
-			};
-		};
-	};
-
 	buttons: gpio-keys {
 		#size-cells = <0>;
 		compatible = "gpio-keys";
@@ -99,10 +64,6 @@
 	leds: led {
 		compatible = "gpio-leds";
 
-		/*
-		 * Disable led-5, because GPIO E is
-		 * already used as touch interrupt.
-		 */
 		led-5 {
 			color = <LED_COLOR_ID_GREEN>;
 			default-state = "off";
@@ -110,7 +71,6 @@
 			gpios = <&gpio4 5 GPIO_ACTIVE_HIGH>; /* GPIO E */
 			pinctrl-0 = <&pinctrl_dhcom_e>;
 			pinctrl-names = "default";
-			status = "disabled";
 		};
 
 		led-6 {
@@ -138,17 +98,6 @@
 			gpios = <&gpio4 8 GPIO_ACTIVE_HIGH>; /* GPIO I */
 			pinctrl-0 = <&pinctrl_dhcom_i>;
 			pinctrl-names = "default";
-		};
-	};
-
-	panel {
-		backlight = <&display_bl>;
-		compatible = "edt,etm0700g0edh6";
-
-		port {
-			lcd_panel_in: endpoint {
-				remote-endpoint = <&lcd_display_out>;
-			};
 		};
 	};
 
@@ -234,28 +183,11 @@
 		VDDA-supply = <&reg_3p3v>;
 		VDDIO-supply = <&sw2_reg>;
 	};
-
-	touchscreen@38 {
-		compatible = "edt,edt-ft5406";
-		interrupt-parent = <&gpio4>;
-		interrupts = <5 IRQ_TYPE_EDGE_FALLING>; /* GPIO E */
-		pinctrl-0 = <&pinctrl_dhcom_e>;
-		pinctrl-names = "default";
-		reg = <0x38>;
-	};
-};
-
-&ipu1_di0_disp0 {
-	remote-endpoint = <&lcd_display_in>;
 };
 
 &pcie {
 	pinctrl-0 = <&pinctrl_pcie &pinctrl_dhcom_j>;
 	reset-gpio = <&gpio6 14 GPIO_ACTIVE_LOW>; /* GPIO J */
-	status = "okay";
-};
-
-&pwm1 {
 	status = "okay";
 };
 
@@ -280,14 +212,14 @@
 			 * B: key TA2
 			 * C: key TA3
 			 * D: key TA4
-			 * E: touchscreen
+			 * E: led5
 			 * F: led6
-			 * G: backlight enable
 			 * H: led7
 			 * I: led8
 			 * J: PCIe reset
 			 */
 			&pinctrl_hog_base
+			&pinctrl_dhcom_g
 			&pinctrl_dhcom_k &pinctrl_dhcom_l
 			&pinctrl_dhcom_m &pinctrl_dhcom_n &pinctrl_dhcom_o
 			&pinctrl_dhcom_p &pinctrl_dhcom_q &pinctrl_dhcom_r
