@@ -1,4 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
+
+DTC_FLAGS_imx6dl-dhcom-pdk2 := -@
+DTC_FLAGS_imx6q-dhcom-pdk2 := -@
+DTC_FLAGS_imx6s-dhcom-pdk2 := -@
+
 dtb-$(CONFIG_ARCH_ALPINE) += \
 	alpine-db.dtb
 dtb-$(CONFIG_MACH_ARTPEC6) += \
@@ -574,6 +579,7 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6q-cubox-i-som-v15.dtb \
 	imx6q-dfi-fs700-m60.dtb \
 	imx6q-dhcom-pdk2.dtb \
+	imx6qdl-dhcom-pdk2-overlay-560-200-x12.dtbo \
 	imx6q-display5-tianma-tm070-1280x768.dtb \
 	imx6q-dmo-edmqmx6.dtb \
 	imx6q-dms-ba16.dtb \
