@@ -118,6 +118,7 @@ struct watchdog_device {
 #define WDOG_HW_RUNNING		3	/* True if HW watchdog running */
 #define WDOG_STOP_ON_UNREGISTER	4	/* Should be stopped on unregister */
 #define WDOG_NO_PING_ON_SUSPEND	5	/* Ping worker should be stopped on suspend */
+#define WDOG_HW_ALWAYS_ENABLED	6	/* Keep watchdog HW always enabled */
 	struct list_head deferred;
 };
 
