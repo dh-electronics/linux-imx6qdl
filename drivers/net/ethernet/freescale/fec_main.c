@@ -2087,6 +2087,27 @@ static void fec_enet_phy_reset_after_clk_enable(struct net_device *ndev)
 	}
 }
 
+static void fec_enet_set_phy_in_reset_state(struct net_device *ndev)
+{
+	struct fec_enet_private *fep = netdev_priv(ndev);
+	struct phy_device *phy_dev = ndev->phydev;
+
+	if (phy_dev) {
+		mdio_device_reset(&phy_dev->mdio, 1);
+	} else if (fep->phy_node) {
+		/*
+		 * If the PHY still is not bound to the MAC, but there is
+		 * OF PHY node and a matching PHY device instance already,
+		 * use the OF PHY node to obtain the PHY device instance,
+		 * and then use that PHY device instance when triggering
+		 * the PHY reset.
+		 */
+		phy_dev = of_phy_find_device(fep->phy_node);
+		mdio_device_reset(&phy_dev->mdio, 1);
+		put_device(&phy_dev->mdio.dev);
+	}
+}
+
 static int fec_enet_clk_enable(struct net_device *ndev, bool enable)
 {
 	struct fec_enet_private *fep = netdev_priv(ndev);
@@ -2119,6 +2140,8 @@ static int fec_enet_clk_enable(struct net_device *ndev, bool enable)
 
 		fec_enet_phy_reset_after_clk_enable(ndev);
 	} else {
+		fec_enet_set_phy_in_reset_state(ndev);
+
 		clk_disable_unprepare(fep->clk_enet_out);
 		if (fep->clk_ptp) {
 			mutex_lock(&fep->ptp_clk_mutex);
