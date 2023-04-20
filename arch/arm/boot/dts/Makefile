@@ -8,6 +8,10 @@ DTC_FLAGS_imx6dl-dhcom-pdk2 := -@
 DTC_FLAGS_imx6q-dhcom-pdk2 := -@
 DTC_FLAGS_imx6s-dhcom-pdk2 := -@
 
+DTC_FLAGS_imx6dl-dhcom-ep-1109g.dtb := -@
+DTC_FLAGS_imx6q-dhcom-ep-1109g.dtb := -@
+DTC_FLAGS_imx6s-dhcom-ep-1109g.dtb := -@
+
 dtb-$(CONFIG_ARCH_ALPINE) += \
 	alpine-db.dtb
 dtb-$(CONFIG_MACH_ARTPEC6) += \
@@ -491,6 +495,7 @@ dtb-$(CONFIG_SOC_IMX6Q) += \
 	imx6dl-cubox-i-emmc-som-v15.dtb \
 	imx6dl-cubox-i-som-v15.dtb \
 	imx6dl-dfi-fs700-m60.dtb \
+	imx6dl-dhcom-ep-1109g.dtb \
 	imx6dl-dhcom-picoitx.dtb \
 	imx6qdl-dhcom-picoitx-overlay-539-400-x2.dtbo \
 	imx6qdl-dhcom-picoitx-overlay-548-200-x2.dtbo \
