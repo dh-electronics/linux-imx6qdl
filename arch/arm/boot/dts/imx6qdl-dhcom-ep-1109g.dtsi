@@ -10,6 +10,42 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	display_bl: display-bl {
+		brightness-levels = <0 16 22 30 40 55 75 102 138 188 255>;
+		compatible = "pwm-backlight";
+		default-brightness-level = <8>;
+		enable-gpios = <&gpio3 27 GPIO_ACTIVE_HIGH>; /* GPIO G */
+		power-supply = <&reg_ext_24v>;
+		pwms = <&pwm1 0 50000 PWM_POLARITY_INVERTED>;
+		status = "okay";
+	};
+
+	lcd_display: disp0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "fsl,imx-parallel-display";
+		interface-pix-fmt = "rgb24";
+		pinctrl-0 = <&pinctrl_ipu1_lcdif &pinctrl_dhcom_g>;
+		pinctrl-names = "default";
+		status = "okay";
+
+		port@0 {
+			reg = <0>;
+
+			lcd_display_in: endpoint {
+				remote-endpoint = <&ipu1_di0_disp0>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+
+			lcd_display_out: endpoint {
+				remote-endpoint = <&lcd_panel_in>;
+			};
+		};
+	};
+
 	led {
 		compatible = "gpio-leds";
 
@@ -21,6 +57,45 @@
 			pinctrl-0 = <&pinctrl_dhcom_i>;
 			pinctrl-names = "default";
 		};
+	};
+
+	panel {
+		backlight = <&display_bl>;
+		compatible = "panel-dpi";
+		data-mapping = "bgr666";
+		height-mm = <91>;
+		width-mm = <152>;
+		power-supply = <&reg_ext_24v>;
+
+		port {
+			lcd_panel_in: endpoint {
+				remote-endpoint = <&lcd_display_out>;
+			};
+		};
+
+		panel-timing {
+			clock-frequency = <33260000>;
+			hactive = <800>;
+			vactive = <480>;
+			hfront-porch = <42>;
+			hback-porch = <86>;
+			hsync-len = <128>;
+			vfront-porch = <10>;
+			vback-porch = <33>;
+			vsync-len = <2>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <1>;
+			pixelclk-active = <1>;
+		};
+	};
+
+	reg_ext_24v: regulator-ext-24v {
+		compatible = "regulator-fixed";
+		regulator-name = "24V_EXT";
+		regulator-min-microvolt = <24000000>;
+		regulator-max-microvolt = <24000000>;
+		regulator-always-on;
 	};
 };
 
@@ -48,17 +123,32 @@
 		"", "", "", "", "", "", "", "";
 };
 
+&i2c3 {
+	touchscreen@49 { /* TSC2004 */
+		status = "okay";
+	};
+};
+
+&ipu1_di0_disp0 {
+	remote-endpoint = <&lcd_display_in>;
+};
+
+&pwm1 {
+	status = "okay";
+};
+
 &iomuxc {
 	pinctrl-0 = <
 			/*
 			 * The following DHCOM GPIOs are used on this board.
 			 * Therefore, they have been removed from the list below.
 			 * I: yellow led
+			 * G: backlight enable
 			 */
 			&pinctrl_hog_base
 			&pinctrl_dhcom_a &pinctrl_dhcom_b &pinctrl_dhcom_c
 			&pinctrl_dhcom_d &pinctrl_dhcom_e &pinctrl_dhcom_f
-			&pinctrl_dhcom_g &pinctrl_dhcom_h
+			&pinctrl_dhcom_h
 			&pinctrl_dhcom_j &pinctrl_dhcom_k &pinctrl_dhcom_l
 			&pinctrl_dhcom_m &pinctrl_dhcom_n &pinctrl_dhcom_o
 			&pinctrl_dhcom_p &pinctrl_dhcom_q &pinctrl_dhcom_r
