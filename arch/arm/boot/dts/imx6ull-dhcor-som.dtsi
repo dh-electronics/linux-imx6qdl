@@ -27,11 +27,12 @@
 &cpu0 {
 	/*
 	 * Due to the design as a solderable SOM, there are no capacitors
-	 * below the SoC, therefore higher voltages are required.
+	 * below the SoC, therefore higher voltages are required and the
+	 * SoM isn't capable for 900MHz.
 	 */
+	clock-frequency = <792000000>;
 	operating-points = <
 		/* kHz	uV */
-		900000	1275000
 		792000	1250000 /* Voltage increased */
 		528000	1175000
 		396000	1025000
@@ -39,7 +40,6 @@
 	>;
 	fsl,soc-operating-points = <
 		/* KHz	uV */
-		900000	1250000
 		792000	1250000 /* Voltage increased */
 		528000	1175000
 		396000	1175000
