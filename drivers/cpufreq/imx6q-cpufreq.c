@@ -283,6 +283,8 @@ static int imx6q_opp_check_speed_grading(struct device *dev)
 static int imx6ul_opp_check_speed_grading(struct device *dev)
 {
 	u32 val;
+	unsigned long freq;
+	struct dev_pm_opp *opp;
 	int ret = 0;
 
 	if (of_find_property(dev->of_node, "nvmem-cells", NULL)) {
@@ -327,6 +329,22 @@ static int imx6ul_opp_check_speed_grading(struct device *dev)
 			imx6x_disable_freq_in_opp(dev, 696000000);
 
 	if (of_machine_is_compatible("fsl,imx6ull")) {
+		/*
+		 * For a 900MHz i.MX6ULL CPU, if the specified OPP doesn't
+		 * define an operating point above 792MHz, reduce the speed
+		 * grade to 792MHz. This is a simple way to avoid falling
+		 * back to a maximum frequency of 528MHz for this CPU, as
+		 * otherwise the 792MHz frequency would also be removed.
+		 */
+		if (val == OCOTP_CFG3_6ULL_SPEED_900MHZ) {
+			freq = 792000000 + 1;
+			opp = dev_pm_opp_find_freq_ceil(dev, &freq);
+			if (IS_ERR(opp))
+				val = OCOTP_CFG3_6ULL_SPEED_792MHZ;
+			else
+				dev_pm_opp_put(opp);
+		}
+
 		if (val != OCOTP_CFG3_6ULL_SPEED_792MHZ)
 			imx6x_disable_freq_in_opp(dev, 792000000);
 
