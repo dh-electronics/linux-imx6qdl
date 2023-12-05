@@ -498,7 +498,8 @@ static void imx_uart_stop_tx(struct uart_port *port)
 }
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_stop_rx(struct uart_port *port)
+static void imx_uart_stop_rx_with_loopback_rs485_ctrl(struct uart_port *port,
+						  bool loopback_rs485_enable)
 {
 	struct imx_port *sport = (struct imx_port *)port;
 	u32 ucr1, ucr2, ucr4, uts;
@@ -518,7 +519,7 @@ static void imx_uart_stop_rx(struct uart_port *port)
 	imx_uart_writel(sport, ucr4, UCR4);
 
 	/* See SER_RS485_ENABLED/UTS_LOOP comment in imx_uart_probe() */
-	if (port->rs485.flags & SER_RS485_ENABLED &&
+	if (port->rs485.flags & SER_RS485_ENABLED && loopback_rs485_enable &&
 	    port->rs485.flags & SER_RS485_RTS_ON_SEND &&
 	    sport->have_rtscts && !sport->have_rtsgpio) {
 		uts = imx_uart_readl(sport, imx_uart_uts_reg(sport));
@@ -530,6 +531,12 @@ static void imx_uart_stop_rx(struct uart_port *port)
 	}
 
 	imx_uart_writel(sport, ucr2, UCR2);
+}
+
+/* called with port.lock taken and irqs off */
+static void imx_uart_stop_rx(struct uart_port *port)
+{
+	imx_uart_stop_rx_with_loopback_rs485_ctrl(port, 1);
 }
 
 /* called with port.lock taken and irqs off */
@@ -722,7 +729,7 @@ static void imx_uart_start_tx(struct uart_port *port)
 
 			if (!(port->rs485.flags & SER_RS485_RX_DURING_TX) &&
 			    !port->rs485_rx_during_tx_gpio)
-				imx_uart_stop_rx(port);
+				imx_uart_stop_rx_with_loopback_rs485_ctrl(port, 0);
 
 			sport->tx_state = WAIT_AFTER_RTS;
 
@@ -1585,6 +1592,9 @@ static void imx_uart_shutdown(struct uart_port *port)
 		uts = imx_uart_readl(sport, imx_uart_uts_reg(sport));
 		uts |= UTS_LOOP;
 		imx_uart_writel(sport, uts, imx_uart_uts_reg(sport));
+		ucr2 = imx_uart_readl(sport, UCR2);
+		ucr2 |= UCR2_RXEN;
+		imx_uart_writel(sport, ucr2, UCR2);
 		ucr1 |= UCR1_UARTEN;
 	} else {
 		ucr1 &= ~UCR1_UARTEN;
