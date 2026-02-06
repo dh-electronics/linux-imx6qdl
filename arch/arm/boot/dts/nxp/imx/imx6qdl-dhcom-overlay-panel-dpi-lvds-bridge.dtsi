@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (C) 2021 Marek Vasut <marex@denx.de>
+ * Copyright (C) 2023 DH electronics GmbH
+ */
+/dts-v1/;
+/plugin/;
+
+#include "imx6qdl-dhcom-overlay-panel-dpi.dtsi"
+
+&{/} {
+	lvds-encoder {
+		compatible = "onsemi,fin3385", "lvds-encoder";
+		pclk-sample = <1>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				lvds_bridge_in: endpoint {
+					remote-endpoint = <&ipu1_dpi0_out>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				lvds_bridge_out: endpoint {
+					remote-endpoint = <&panel_in>;
+				};
+			};
+		};
+	};
+};
+
+&ipu1_dpi0_out {
+	remote-endpoint = <&lvds_bridge_in>;
+};
+
+&panel_in {
+	remote-endpoint = <&lvds_bridge_out>;
+};
