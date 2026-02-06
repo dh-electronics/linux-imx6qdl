@@ -165,10 +165,13 @@ static int watchdog_reboot_notifier(struct notifier_block *nb,
 		if (watchdog_hw_running(wdd)) {
 			int ret;
 
-			ret = wdd->ops->stop(wdd);
-			trace_watchdog_stop(wdd, ret);
-			if (ret)
-				return NOTIFY_BAD;
+			clear_bit(WDOG_HW_ALWAYS_ENABLED, &wdd->status);
+			if (wdd->ops->stop) {
+				ret = wdd->ops->stop(wdd);
+				trace_watchdog_stop(wdd, ret);
+				if (ret)
+					return NOTIFY_BAD;
+			}
 		}
 	}
 
