@@ -759,6 +759,24 @@
 		>;
 	};
 
+	pinctrl_uart5_rs485: uart5-rs485-grp {
+		fsl,pins = <
+			MX6QDL_PAD_CSI0_DAT14__UART5_TX_DATA	0x1b0b1
+			MX6QDL_PAD_CSI0_DAT15__UART5_RX_DATA	0x1b0b1
+			MX6QDL_PAD_CSI0_DAT18__GPIO6_IO04	0x4001b0b1
+			MX6QDL_PAD_CSI0_DAT19__UART5_CTS_B	0x30b1
+		>;
+	};
+
+	pinctrl_uart5_rs485_init: uart5-rs485-init-grp {
+		fsl,pins = <
+			MX6QDL_PAD_CSI0_DAT14__UART5_TX_DATA	0x1b0b1
+			MX6QDL_PAD_CSI0_DAT15__UART5_RX_DATA	0x1b0b1
+			MX6QDL_PAD_CSI0_DAT18__GPIO6_IO04	0x4001b0b1
+			MX6QDL_PAD_CSI0_DAT19__GPIO6_IO05	0x30b1
+		>;
+	};
+
 	pinctrl_usbh1: usbh1-grp {
 		fsl,pins = <
 			MX6QDL_PAD_EIM_D31__GPIO3_IO31		0x120b0

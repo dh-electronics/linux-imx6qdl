@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * Copyright (C) 2023 DH electronics GmbH
+ */
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+
+&gpio6 {
+	rts-init-hog {
+		gpio-hog;
+		gpios = <5 0>;
+		line-name = "rs485-de";
+		output-low;
+	};
+};
+
+&uart5 {
+	linux,rs485-enabled-at-boot-time;
+	pinctrl-0 = <&pinctrl_uart5_rs485>;
+	pinctrl-1 = <&pinctrl_uart5_rs485_init>;
+	pinctrl-names = "default", "init";
+	rs485-rx-during-tx-gpios = <&gpio6 4 GPIO_ACTIVE_LOW>; /* cts pin */
+};
